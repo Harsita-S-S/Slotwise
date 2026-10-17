@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Facilities View (Module 2, Option A: Dual View - Card Grid with Table Toggle)
+  Controller: com.fms.controller.FacilityController
+-->
+<VBox spacing="18" style="-fx-padding: 24;"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.fms.controller.FacilityController">
+
+    <!-- ============================================================
+         TOP HEADER & ACTION BAR
+         ============================================================ -->
+    <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="Facility Management"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Label text="Browse, filter, and manage institutional spaces and resources"
+                   styleClass="card-subtitle" />
+        </VBox>
+
+        <!-- Admin Add Facility Button -->
+        <Button fx:id="addFacilityButton" text="+ Add Facility"
+                styleClass="btn-primary" onAction="#handleOpenAddDialog" />
+    </HBox>
+
+    <!-- ============================================================
+         FILTER & SEARCH BAR CARD (FR-FAC-04)
+         ============================================================ -->
+    <VBox styleClass="card" spacing="12">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+
+            <!-- Search input -->
+            <TextField fx:id="searchField" promptText="🔍  Search by name or building..."
+                       styleClass="text-field" prefWidth="260" HBox.hgrow="ALWAYS" />
+
+            <!-- Type Filter -->
+            <ComboBox fx:id="typeFilterCombo" promptText="All Types"
+                      prefWidth="140" styleClass="combo-box" />
+
+            <!-- Building Filter -->
+            <ComboBox fx:id="buildingFilterCombo" promptText="All Buildings"
+                      prefWidth="160" styleClass="combo-box" />
+
+            <!-- Min Capacity -->
+            <TextField fx:id="capacityFilterField" promptText="Min Seats"
+                       prefWidth="100" styleClass="text-field" />
+
+            <!-- Amenity Keyword -->
+            <TextField fx:id="amenityFilterField" promptText="Amenity (e.g. AC)"
+                       prefWidth="130" styleClass="text-field" />
+
+            <!-- Status Filter -->
+            <ComboBox fx:id="statusFilterCombo" promptText="All Statuses"
+                      prefWidth="140" styleClass="combo-box" />
+
+            <!-- Clear/Reset Button -->
+            <Button fx:id="resetFiltersButton" text="Reset"
+                    styleClass="btn-secondary" onAction="#handleResetFilters" />
+
+        </HBox>
+    </VBox>
+
+    <!-- ============================================================
+         RESULTS SUMMARY & VIEW TOGGLE (Cards vs Table)
+         ============================================================ -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label fx:id="resultCountLabel" text="Showing 0 facilities"
+               style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7A6B66;" />
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <!-- Dual View Toggle -->
+        <HBox spacing="0">
+            <Button fx:id="cardViewBtn" text="⊞  Cards"
+                    styleClass="view-toggle-btn-active" onAction="#handleShowCardView"
+                    style="-fx-background-radius: 6 0 0 6; -fx-border-radius: 6 0 0 6;" />
+            <Button fx:id="tableViewBtn" text="☰  Table"
+                    styleClass="view-toggle-btn" onAction="#handleShowTableView"
+                    style="-fx-background-radius: 0 6 6 0; -fx-border-radius: 0 6 6 0;" />
+        </HBox>
+    </HBox>
+
+    <!-- ============================================================
+         CONTENT AREA: STACK OF CARDS FLOWPANE AND TABLEVIEW
+         ============================================================ -->
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <!-- 1. Card Grid View -->
+        <ScrollPane fx:id="cardScrollPane" fitToWidth="true"
+                    style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <FlowPane fx:id="cardContainer" hgap="16" vgap="16"
+                      prefWrapLength="800" style="-fx-padding: 4 0 20 0;" />
+        </ScrollPane>
+
+        <!-- 2. Table View -->
+        <TableView fx:id="facilityTable" visible="false" managed="false"
+                   styleClass="table-view" prefHeight="450">
+            <columns>
+                <TableColumn fx:id="colName" text="Facility Name" prefWidth="180" />
+                <TableColumn fx:id="colType" text="Type" prefWidth="100" />
+                <TableColumn fx:id="colBuilding" text="Building" prefWidth="130" />
+                <TableColumn fx:id="colFloor" text="Floor" prefWidth="60" />
+                <TableColumn fx:id="colCapacity" text="Capacity" prefWidth="80" />
+                <TableColumn fx:id="colAmenities" text="Amenities" prefWidth="200" />
+                <TableColumn fx:id="colApproval" text="Approval" prefWidth="100" />
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="110" />
+                <TableColumn fx:id="colActions" text="Actions" prefWidth="140" />
+            </columns>
+        </TableView>
+
+    </StackPane>
+
+</VBox>

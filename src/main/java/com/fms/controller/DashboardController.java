@@ -45,12 +45,17 @@ public class DashboardController {
     @FXML private Label welcomeLabel;
     @FXML private Label roleInfoLabel;
 
+    private java.util.List<javafx.scene.Node> defaultDashboardNodes;
+
     /**
      * Called automatically by JavaFX after the FXML is loaded.
      * Sets up the sidebar based on the current user's role.
      */
     @FXML
     public void initialize() {
+        // Save initial overview cards
+        defaultDashboardNodes = new java.util.ArrayList<>(contentArea.getChildren());
+
         SessionManager session = SessionManager.getInstance();
 
         // Display user info in sidebar (FR-AUTH-04)
@@ -124,13 +129,32 @@ public class DashboardController {
     @FXML
     private void handleNavDashboard() {
         setActiveNavButton(navDashboard);
+        if (defaultDashboardNodes != null) {
+            contentArea.getChildren().setAll(defaultDashboardNodes);
+        }
         logger.info("Navigated to: Dashboard");
     }
 
     @FXML
     private void handleNavFacilities() {
         setActiveNavButton(navFacilities);
+        loadView("/com/fms/view/facilities.fxml");
         logger.info("Navigated to: Facilities");
+    }
+
+    private void loadView(String fxmlPath) {
+        try {
+            java.net.URL fxmlUrl = getClass().getResource(fxmlPath);
+            if (fxmlUrl != null) {
+                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
+                javafx.scene.Parent view = loader.load();
+                contentArea.getChildren().setAll(view);
+            } else {
+                logger.error("FXML file not found: {}", fxmlPath);
+            }
+        } catch (java.io.IOException e) {
+            logger.error("Failed to load view {}: {}", fxmlPath, e.getMessage(), e);
+        }
     }
 
     @FXML

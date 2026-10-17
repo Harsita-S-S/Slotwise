@@ -441,3 +441,83 @@
     -fx-text-fill: #4A3E3D;
     -fx-font-size: 13px;
 }
+
+/* ----------------------------------------------------------------
+ * FACILITY CARDS & BADGES (Module 2)
+ * ---------------------------------------------------------------- */
+
+.badge-available {
+    -fx-background-color: rgba(107, 143, 113, 0.18);
+    -fx-text-fill: #4e7354;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-inactive {
+    -fx-background-color: rgba(122, 107, 102, 0.18);
+    -fx-text-fill: #7A6B66;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-approval {
+    -fx-background-color: rgba(217, 119, 87, 0.12);
+    -fx-text-fill: #D97757;
+    -fx-padding: 2 8;
+    -fx-background-radius: 4;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.amenity-tag {
+    -fx-background-color: #F7F4EF;
+    -fx-border-color: #E5DDD0;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-text-fill: #7A6B66;
+    -fx-padding: 2 8;
+    -fx-font-size: 11px;
+}
+
+/* Facility Card Container */
+.facility-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8;
+    -fx-border-color: #E5DDD0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(gaussian, rgba(74, 62, 61, 0.06), 12, 0.0, 0, 3);
+}
+
+.facility-card:hover {
+    -fx-border-color: #D97757;
+    -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.15), 16, 0.0, 0, 4);
+}
+
+/* Dual View Toggle Buttons */
+.view-toggle-btn {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5DDD0;
+    -fx-border-width: 1;
+    -fx-text-fill: #7A6B66;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+.view-toggle-btn-active {
+    -fx-background-color: #D97757;
+    -fx-border-color: #D97757;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+

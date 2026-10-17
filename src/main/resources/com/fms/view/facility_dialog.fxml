@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Add/Edit Facility Modal Dialog (FR-FAC-01, FR-FAC-02, FR-FAC-05)
+-->
+<VBox spacing="16" prefWidth="500" styleClass="card"
+      style="-fx-padding: 24; -fx-background-color: #FFFFFF;"
+      xmlns:fx="http://javafx.com/fxml">
+
+    <!-- Dialog Header -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="🏢" style="-fx-font-size: 20px;" />
+        <VBox spacing="2">
+            <Label fx:id="dialogTitle" text="Add Facility" styleClass="card-title" />
+            <Label text="Configure institutional facility spaces and booking rules" styleClass="card-subtitle" />
+        </VBox>
+    </HBox>
+
+    <Region prefHeight="1" style="-fx-background-color: #E5DDD0;" />
+
+    <!-- Form Fields Grid -->
+    <GridPane hgap="12" vgap="12">
+
+        <!-- Facility Name -->
+        <Label text="Facility Name *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <TextField fx:id="nameField" promptText="e.g. Turing Computing Lab" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <!-- Facility Type -->
+        <Label text="Type *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+        <ComboBox fx:id="typeComboBox" promptText="Select Type" maxWidth="Infinity" styleClass="combo-box"
+                  GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+        <!-- Building -->
+        <Label text="Building *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <TextField fx:id="buildingField" promptText="e.g. Tech Block A" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+        <!-- Floor -->
+        <Label text="Floor *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+        <TextField fx:id="floorField" promptText="Floor number (e.g. 1)" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+        <!-- Capacity -->
+        <Label text="Capacity (Seats) *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+        <TextField fx:id="capacityField" promptText="e.g. 60" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+        <!-- Amenities -->
+        <Label text="Amenities" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+        <TextField fx:id="amenitiesField" promptText="e.g. Projector, AC, Wi-Fi, Smart Board" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+        <!-- Requires Approval -->
+        <Label text="Approval Rule" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+        <CheckBox fx:id="requiresApprovalCheckBox" text="Requires Admin approval before booking is confirmed"
+                  style="-fx-text-fill: #4A3E3D; -fx-font-size: 12px;"
+                  GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+        <!-- Status (visible when editing) -->
+        <Label fx:id="statusLabel" text="Status" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+        <ComboBox fx:id="statusComboBox" maxWidth="Infinity" styleClass="combo-box"
+                  GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+    </GridPane>
+
+    <!-- Error message display -->
+    <Label fx:id="dialogErrorLabel" text="" styleClass="error-label" wrapText="true" visible="false" managed="false" />
+
+    <!-- Action Buttons -->
+    <HBox alignment="CENTER_RIGHT" spacing="12">
+        <Button fx:id="cancelButton" text="Cancel" styleClass="btn-secondary" />
+        <Button fx:id="saveButton" text="Save Facility" styleClass="btn-primary" />
+    </HBox>
+
+</VBox>
