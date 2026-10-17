@@ -25,12 +25,32 @@ INSERT INTO time_slots (slot_no, start_time, end_time) VALUES
 ON DUPLICATE KEY UPDATE start_time=VALUES(start_time), end_time=VALUES(end_time);
 
 -- 2. Insert Sample Facilities (Module 2, Sec 4.2)
-INSERT INTO facilities (facility_id, name, type, building, floor, capacity, amenities, requires_approval, status) VALUES
-(1, 'Lecture Hall 101', 'Classroom', 'Academic Block A', 1, 50, 'Epson Projector, Whiteboard, Wi-Fi, AC', FALSE, 'Available'),
-(2, 'Advanced Computing Lab', 'Laboratory', 'Tech Block', 2, 60, '60 Dell Workstations, Gigabit LAN, AC, Smart Board', TRUE, 'Available'),
-(3, 'Main Auditorium', 'Hall', 'Central Block', 1, 300, 'Surround Audio, Stage Lighting, Dual Laser Projectors, Central AC', TRUE, 'Available'),
-(4, 'Seminar Hall B', 'Hall', 'Academic Block B', 3, 100, 'Podium Mic, Projector, High-speed Wi-Fi, AC', FALSE, 'Available')
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+INSERT INTO facilities (name, type, building, floor, capacity, amenities, requires_approval, status) VALUES
+-- Auditoriums & Conference (A, D, F Blocks)
+('A-101 Main Auditorium', 'Hall', 'A-Block', 1, 600, 'Stage, Central AC, Pro Audio, Projector', 1, 'Available'),
+('A-201 Executive Conference Room', 'Hall', 'A-Block', 2, 40, 'Conference Table, Smart Display, AC', 1, 'Available'),
+('D-101 Seminar Hall D', 'Hall', 'D-Block', 1, 200, 'Tiered Seating, Audio System, AC', 1, 'Available'),
+('F-101 Amphitheater & Audit', 'Hall', 'F-Block', 1, 500, 'Large Stage, Dolby Sound, Central AC', 1, 'Available'),
+('F-201 Conference Suite F', 'Hall', 'F-Block', 2, 50, 'Presentation Screen, Smart Board, AC', 1, 'Available'),
+
+-- Specialized Labs (J & M Blocks)
+('J-201 Advanced Computing Lab', 'Laboratory', 'J-Block', 2, 60, '60 Workstations, LAN, AC, Projector', 1, 'Available'),
+('J-301 AI & Machine Learning Lab', 'Laboratory', 'J-Block', 3, 60, 'High-End GPU Workstations, AC, LAN', 1, 'Available'),
+('M-201 Embedded Systems Lab', 'Laboratory', 'M-Block', 2, 50, 'Oscilloscopes, Microcontrollers, AC', 1, 'Available'),
+('M-301 VLSI & Hardware Lab', 'Laboratory', 'M-Block', 3, 45, 'Workstations, EDA Tools, AC, LAN', 1, 'Available'),
+('K-201 CAD Design Studio', 'Laboratory', 'K-Block', 2, 40, 'Workstations, Plotters, AC, Projector', 1, 'Available'),
+
+-- Classrooms & Lecture Halls across all blocks
+('A-202 Lecture Classroom A', 'Classroom', 'A-Block', 2, 60, 'Projector, Whiteboard, Wi-Fi', 0, 'Available'),
+('D-202 Classroom D-202', 'Classroom', 'D-Block', 2, 70, 'Projector, Whiteboard, Wi-Fi', 0, 'Available'),
+('E-201 Smart Classroom E-201', 'Classroom', 'E-Block', 2, 75, 'Projector, Smart Board, Wi-Fi, AC', 0, 'Available'),
+('G-201 Lecture Hall G-201', 'Classroom', 'G-Block', 2, 120, 'Tiered Seating, Projector, Audio, Wi-Fi', 0, 'Available'),
+('H-201 Classroom H-201', 'Classroom', 'H-Block', 2, 60, 'Projector, Whiteboard, Wi-Fi', 0, 'Available'),
+('I-201 Classroom I-201', 'Classroom', 'I-Block', 2, 60, 'Projector, Whiteboard, Wi-Fi', 0, 'Available'),
+('N-201 Classroom N-201', 'Classroom', 'N-Block', 2, 70, 'Projector, Wi-Fi, Ergonomic Desks', 0, 'Available'),
+('Q-201 Lecture Theater Q-201', 'Classroom', 'Q-Block', 2, 100, 'Tiered Seating, Dual Projectors, AC', 0, 'Available'),
+('Y-201 Research Studio Y-201', 'Hall', 'Y-Block', 2, 35, 'Discussion Tables, Smart Display, AC', 1, 'Available')
+ON DUPLICATE KEY UPDATE type=VALUES(type), floor=VALUES(floor), capacity=VALUES(capacity), amenities=VALUES(amenities), requires_approval=VALUES(requires_approval), status=VALUES(status);
 
 -- 3. Insert Sample Equipment (Module 3, Sec 4.3)
 INSERT INTO equipment (equipment_id, facility_id, name, category, serial_no, purchase_date, condition_status) VALUES
