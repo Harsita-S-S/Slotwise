@@ -187,9 +187,11 @@ public class DashboardController {
                 contentArea.getChildren().setAll(view);
             } else {
                 logger.error("FXML file not found: {}", fxmlPath);
+                showEmptyView("File Not Found", "The view template " + fxmlPath + " could not be found.");
             }
-        } catch (java.io.IOException e) {
+        } catch (Exception e) {
             logger.error("Failed to load view {}: {}", fxmlPath, e.getMessage(), e);
+            showEmptyView("Unable to Load View", "Error: " + e.getMessage());
         }
     }
 

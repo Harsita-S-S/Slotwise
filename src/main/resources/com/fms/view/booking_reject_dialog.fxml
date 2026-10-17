@@ -23,8 +23,8 @@
     </VBox>
 
     <HBox spacing="12" alignment="CENTER_RIGHT">
-        <Button text="Cancel" styleClass="btn-secondary" onAction="#handleCancelReject" />
-        <Button text="Reject Request" styleClass="btn-danger" onAction="#handleConfirmReject" />
+        <Button fx:id="btnCancel" text="Cancel" styleClass="btn-secondary" />
+        <Button fx:id="btnReject" text="Reject Request" styleClass="btn-danger" />
     </HBox>
 
 </VBox>

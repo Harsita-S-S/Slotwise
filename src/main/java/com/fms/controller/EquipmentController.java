@@ -545,6 +545,13 @@ public class EquipmentController {
                     refreshCategoryDropdown();
                     applyFilters();
 
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Equipment Saved");
+                    success.setHeaderText(eqToEdit == null ? "Equipment Asset Created!" : "Equipment Asset Updated!");
+                    success.setContentText(String.format("Equipment '%s' (S/N: %s, Category: %s) has been recorded.",
+                            name, serial, category));
+                    success.showAndWait();
+
                 } catch (InvalidInputException ex) {
                     showDialogError(errorLabel, ex.getMessage());
                 } catch (Exception ex) {
@@ -617,6 +624,13 @@ public class EquipmentController {
                     equipmentService.moveEquipment(eq.getEquipmentId(), dest.getFacilityId());
                     dialogStage.close();
                     applyFilters();
+
+                    Alert successMove = new Alert(Alert.AlertType.INFORMATION);
+                    successMove.setTitle("Relocation Success");
+                    successMove.setHeaderText("Equipment Relocated Successfully");
+                    successMove.setContentText(String.format("'%s' [%s] has been relocated to %s.",
+                            eq.getName(), eq.getSerialNo(), dest.getName()));
+                    successMove.showAndWait();
                 } catch (InvalidInputException ex) {
                     showDialogError(errorLabel, ex.getMessage());
                 } catch (Exception ex) {

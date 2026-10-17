@@ -50,17 +50,35 @@ public class BookingService {
      */
     public List<Booking> createBooking(int facilityId, LocalDate bookingDate, List<Integer> slots,
                                       String purpose, int attendees) throws BookingConflictException {
+        return createBooking(facilityId, bookingDate, slots, purpose, attendees, false, false);
+    }
+
+    /**
+     * Overloaded createBooking with extended request and capacity override flags.
+     * - Admin can book up to 10 slots and bypass capacity limits.
+     * - Non-admin can submit extended bookings (>3 slots) which are automatically routed to Pending approval.
+     */
+    public List<Booking> createBooking(int facilityId, LocalDate bookingDate, List<Integer> slots,
+                                      String purpose, int attendees, boolean requestExtendedApproval, boolean allowCapacityOverride)
+            throws BookingConflictException {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null) {
             throw new AccessDeniedException("User must be logged in to create a booking.");
         }
 
+        boolean isAdmin = currentUser.getRole() == Role.Admin;
+
         // BR-02: Date validation
         validateBookingDate(bookingDate);
 
-        // BR-03: Max 3 slots
-        if (slots == null || slots.isEmpty() || slots.size() > 3) {
-            throw new InvalidInputException("slots", "You must select between 1 and 3 slots per booking request (BR-03).");
+        // Slot threshold validation (BR-03 with Extended Request support)
+        if (slots == null || slots.isEmpty() || slots.size() > 10) {
+            throw new InvalidInputException("slots", "You must select between 1 and 10 slots.");
+        }
+
+        boolean isExtended = slots.size() > 3;
+        if (isExtended && !isAdmin && !requestExtendedApproval) {
+            throw new InvalidInputException("slots", "You must select between 1 and 3 slots per booking request (BR-03). For extended bookings (>3 slots), please submit as an Extended Booking Request for Admin approval.");
         }
 
         // Validate individual slot numbers
@@ -97,17 +115,33 @@ public class BookingService {
             throw new BookingConflictException("Facility '" + facility.getName() + "' is currently under maintenance (BR-06).");
         }
 
-        // FR-BKG-03: Capacity check
+        // FR-BKG-03: Capacity check with Admin waiver support
         if (attendees <= 0) {
             throw new InvalidInputException("attendees", "Attendees count must be greater than zero.");
         }
         if (attendees > facility.getCapacity()) {
-            throw new InvalidInputException("attendees", "Attendee count (" + attendees +
-                    ") exceeds facility capacity (" + facility.getCapacity() + ") (FR-BKG-03).");
+            if (isAdmin && allowCapacityOverride) {
+                logger.warn("Admin {} applied capacity override: requested {} for facility {} (capacity {})",
+                        currentUser.getUsername(), attendees, facility.getName(), facility.getCapacity());
+            } else {
+                throw new InvalidInputException("attendees", "Attendee count (" + attendees +
+                        ") exceeds facility capacity (" + facility.getCapacity() + ") (FR-BKG-03).");
+            }
         }
 
         // BR-04: Approval routing
-        BookingStatus initialStatus = facility.isRequiresApproval() ? BookingStatus.Pending : BookingStatus.Approved;
+        BookingStatus initialStatus;
+        if (isAdmin) {
+            initialStatus = BookingStatus.Approved;
+        } else if (isExtended || facility.isRequiresApproval()) {
+            initialStatus = BookingStatus.Pending;
+        } else {
+            initialStatus = BookingStatus.Approved;
+        }
+
+        String finalPurpose = isExtended && !isAdmin
+                ? "[Extended Request - " + slots.size() + " hrs] " + purpose.trim()
+                : purpose.trim();
 
         // Transactional insertion with concurrency locking (Section 7.3)
         try (Connection conn = DBConnection.getInstance().getConnection()) {
@@ -133,7 +167,7 @@ public class BookingService {
                     }
 
                     Booking b = new Booking(facilityId, currentUser.getUserId(), bookingDate, slotNo,
-                            purpose.trim(), attendees, initialStatus);
+                            finalPurpose, attendees, initialStatus);
                     b.setFacilityName(facility.getName());
                     b.setFacilityBuilding(facility.getBuilding());
                     b.setFacilityType(facility.getType());
@@ -173,6 +207,28 @@ public class BookingService {
         } catch (SQLException e) {
             throw new RuntimeException("Database connection failure", e);
         }
+    }
+
+    /**
+     * Creates bookings across a range of consecutive days (multi-day booking, e.g. 2-day conference).
+     */
+    public List<Booking> createMultiDayBooking(int facilityId, LocalDate startDate, LocalDate endDate,
+                                              List<Integer> slots, String purpose, int attendees)
+            throws BookingConflictException {
+        if (startDate == null || endDate == null) {
+            throw new InvalidInputException("date", "Start date and end date must be specified.");
+        }
+        if (endDate.isBefore(startDate)) {
+            throw new InvalidInputException("endDate", "End date cannot be earlier than start date.");
+        }
+        List<Booking> allCreated = new ArrayList<>();
+        LocalDate cur = startDate;
+        while (!cur.isAfter(endDate)) {
+            List<Booking> dayBookings = createBooking(facilityId, cur, slots, purpose, attendees, true, false);
+            allCreated.addAll(dayBookings);
+            cur = cur.plusDays(1);
+        }
+        return allCreated;
     }
 
     /**

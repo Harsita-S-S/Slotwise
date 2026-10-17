@@ -571,6 +571,13 @@ public class FacilityController {
                     refreshBuildingDropdown();
                     applyFilters();
 
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Facility Saved");
+                    success.setHeaderText(facilityToEdit == null ? "Facility Created Successfully!" : "Facility Updated Successfully!");
+                    success.setContentText(String.format("Facility '%s' in %s (Floor %d, Capacity: %d) is now live in the system.",
+                            name, building, floor, capacity));
+                    success.showAndWait();
+
                 } catch (InvalidInputException ex) {
                     showDialogError(errorLabel, ex.getMessage());
                 } catch (Exception ex) {

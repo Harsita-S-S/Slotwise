@@ -6,21 +6,21 @@
 
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.fms.controller.BookingController"
-      spacing="20" style="-fx-padding: 24;">
+      spacing="18" style="-fx-padding: 24;">
 
     <!-- ============================================================
-         HEADER SECTION
+         HEADER SECTION & VIEW MODE TABS
          ============================================================ -->
     <HBox alignment="CENTER_LEFT" spacing="16">
         <VBox spacing="4" HBox.hgrow="ALWAYS">
-            <Label text="Availability Search &amp; Booking" styleClass="card-title" style="-fx-font-size: 22px;" />
-            <Label text="Check visual slot availability, reserve facilities up to 30 days ahead, and track requests."
+            <Label text="Availability &amp; Room Booking" styleClass="card-title" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Label text="Browse facilities, reserve single or multi-day time slots, and manage booking requests."
                    styleClass="card-subtitle" />
         </VBox>
 
         <!-- View Mode Navigation Tabs -->
         <HBox spacing="8" alignment="CENTER_RIGHT">
-            <Button fx:id="btnTabAvailability" text="📅 Book Facilities"
+            <Button fx:id="btnTabAvailability" text="🏢 Browse &amp; Book"
                     styleClass="view-toggle-btn-active" onAction="#handleSwitchToAvailability" />
             <Button fx:id="btnTabMyBookings" text="📋 My Bookings"
                     styleClass="view-toggle-btn" onAction="#handleSwitchToMyBookings" />
@@ -37,158 +37,104 @@
     </HBox>
 
     <!-- ============================================================
-         VIEW 1: AVAILABILITY & VISUAL SLOT MATRIX (FR-BKG-01, FR-BKG-02)
+         VIEW 1: FACILITY DIRECTORY & BOOKING LAUNCHER
          ============================================================ -->
     <VBox fx:id="availabilityPane" spacing="16" VBox.vgrow="ALWAYS">
 
-        <!-- Search Toolbar Card -->
-        <VBox styleClass="card" spacing="14">
-            <HBox spacing="14" alignment="CENTER_LEFT">
-                <!-- Date Picker (BR-02) -->
-                <VBox spacing="4">
-                    <Label text="BOOKING DATE" styleClass="field-label" />
-                    <DatePicker fx:id="datePicker" prefWidth="170" />
-                </VBox>
-
-                <!-- Facility Type Filter -->
-                <VBox spacing="4">
-                    <Label text="FACILITY TYPE" styleClass="field-label" />
-                    <ComboBox fx:id="typeFilterCombo" prefWidth="160" />
-                </VBox>
-
-                <!-- Capacity Filter -->
-                <VBox spacing="4">
-                    <Label text="MIN CAPACITY" styleClass="field-label" />
-                    <TextField fx:id="minCapacityField" promptText="e.g. 50" prefWidth="110" />
-                </VBox>
-
-                <!-- Amenity Filter -->
-                <VBox spacing="4" HBox.hgrow="ALWAYS">
-                    <Label text="AMENITIES" styleClass="field-label" />
-                    <TextField fx:id="amenityFilterField" promptText="Filter by Wi-Fi, Projector, AC..." />
-                </VBox>
-
-                <VBox spacing="4" alignment="BOTTOM_LEFT">
-                    <Button text="Search Slots" styleClass="btn-primary" onAction="#handleSearchSlots" />
-                </VBox>
+        <!-- Search & Filter Bar Card -->
+        <VBox styleClass="card" spacing="12">
+            <!-- Row 1: Search Field -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="🔍  Search by facility name, building, or amenities..."
+                           HBox.hgrow="ALWAYS" styleClass="text-field" />
             </HBox>
 
-            <Separator />
-
-            <!-- Color Legend Row -->
-            <HBox spacing="20" alignment="CENTER_LEFT">
-                <Label text="LEGEND:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #3D6844; -fx-font-size: 14px;" />
-                    <Label text="Free (Available)" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
-                </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #993D3D; -fx-font-size: 14px;" />
-                    <Label text="Booked" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
-                </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #94711E; -fx-font-size: 14px;" />
-                    <Label text="Pending Approval" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
-                </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #994825; -fx-font-size: 14px;" />
-                    <Label text="Under Maintenance" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
-                </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #998C87; -fx-font-size: 14px;" />
-                    <Label text="Past Slot" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
-                </HBox>
-                <HBox spacing="6" alignment="CENTER_LEFT">
-                    <Label text="■" style="-fx-text-fill: #D97757; -fx-font-size: 14px;" />
-                    <Label text="Your Selected Slots (Max 3)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;" />
-                </HBox>
+            <!-- Row 2: Filters and Primary Action Button -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <ComboBox fx:id="typeFilterCombo" promptText="All Types" prefWidth="150" />
+                <TextField fx:id="minCapacityField" promptText="Min Attendees" prefWidth="130" />
+                <Button text="Reset Filters" styleClass="btn-secondary" onAction="#handleResetFilters" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="btnNewBooking" text="⚡ + New Booking" styleClass="btn-primary" onAction="#handleOpenNewBookingDialog" />
             </HBox>
         </VBox>
 
-        <!-- Dynamic Visual Slot Grid Container -->
-        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
-            <VBox fx:id="matrixContainer" spacing="14" style="-fx-padding: 4;">
-                <!-- Room Slot Rows rendered dynamically by controller -->
-            </VBox>
-        </ScrollPane>
-
-        <!-- Persistent Selection Floating Bar (BR-03) -->
-        <HBox fx:id="selectionBar" visible="false" managed="false" alignment="CENTER_LEFT" spacing="16"
-              style="-fx-background-color: #FFFFFF; -fx-border-color: #D97757; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14 20; -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.25), 14, 0.0, 0, 4);">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label fx:id="selectionFacilityLabel" text="Selected Room: None"
-                       style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #4A3E3D;" />
-                <Label fx:id="selectionSlotsLabel" text="Select up to 3 slots for the same room (BR-03)"
-                       style="-fx-font-size: 12px; -fx-text-fill: #7A6B66;" />
-            </VBox>
-            <Button text="Clear Selection" styleClass="btn-secondary" onAction="#handleClearSelection" />
-            <Button fx:id="btnProceedBooking" text="Proceed to Reserve →" styleClass="btn-primary" onAction="#handleOpenBookingModal" />
-        </HBox>
+        <!-- Facility Table Directory -->
+        <TableView fx:id="facilityTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+            <columns>
+                <TableColumn fx:id="colFacilityName" text="Facility Name" prefWidth="210" />
+                <TableColumn fx:id="colFacilityType" text="Type" prefWidth="130" />
+                <TableColumn fx:id="colFacilityLocation" text="Location" prefWidth="180" />
+                <TableColumn fx:id="colFacilityCapacity" text="Capacity" prefWidth="100" />
+                <TableColumn fx:id="colFacilityAmenities" text="Amenities" prefWidth="230" />
+                <TableColumn fx:id="colFacilityPolicy" text="Approval Policy" prefWidth="130" />
+                <TableColumn fx:id="colFacilityAction" text="Action" prefWidth="130" />
+            </columns>
+            <placeholder>
+                <VBox alignment="CENTER" spacing="8" style="-fx-padding: 30;">
+                    <Label text="No facilities found matching your filters." style="-fx-text-fill: #7A6B66; -fx-font-size: 14px;" />
+                    <Label text="Try adjusting your search query or resetting filters." style="-fx-text-fill: #998C87; -fx-font-size: 12px;" />
+                </VBox>
+            </placeholder>
+        </TableView>
 
     </VBox>
 
     <!-- ============================================================
-         VIEW 2: MY BOOKINGS (FR-BKG-08)
+         VIEW 2: MY BOOKINGS (FR-BKG-08, FR-BKG-11)
          ============================================================ -->
-    <VBox fx:id="myBookingsPane" visible="false" managed="false" spacing="14" VBox.vgrow="ALWAYS">
+    <VBox fx:id="myBookingsPane" spacing="14" visible="false" managed="false" VBox.vgrow="ALWAYS">
         <HBox alignment="CENTER_LEFT" spacing="12">
-            <Label text="My Reserved Facilities" styleClass="card-title" />
+            <Label text="My Active &amp; Upcoming Bookings" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="Refresh List" styleClass="btn-secondary" onAction="#handleRefreshMyBookings" />
+            <Button text="↻ Refresh" styleClass="btn-secondary" onAction="#loadMyBookings" />
         </HBox>
 
-        <TableView fx:id="myBookingsTable" VBox.vgrow="ALWAYS">
+        <TableView fx:id="myBookingsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
             <columns>
-                <TableColumn fx:id="colMyFacility" text="Facility" prefWidth="180" />
-                <TableColumn fx:id="colMyBuilding" text="Building" prefWidth="140" />
-                <TableColumn fx:id="colMyDate" text="Date" prefWidth="110" />
+                <TableColumn fx:id="colMyFacility" text="Facility" prefWidth="170" />
+                <TableColumn fx:id="colMyBuilding" text="Location" prefWidth="140" />
+                <TableColumn fx:id="colMyDate" text="Date" prefWidth="100" />
                 <TableColumn fx:id="colMySlot" text="Time Slot" prefWidth="120" />
-                <TableColumn fx:id="colMyAttendees" text="Attendees" prefWidth="80" />
+                <TableColumn fx:id="colMyAttendees" text="Attendees" prefWidth="85" />
                 <TableColumn fx:id="colMyPurpose" text="Purpose" prefWidth="200" />
-                <TableColumn fx:id="colMyStatus" text="Status" prefWidth="120" />
-                <TableColumn fx:id="colMyActions" text="Actions" prefWidth="180" />
+                <TableColumn fx:id="colMyStatus" text="Status" prefWidth="110" />
+                <TableColumn fx:id="colMyActions" text="Action" prefWidth="110" />
             </columns>
+            <placeholder>
+                <Label text="You have no bookings yet. Reserve a space in the 'Browse &amp; Book' tab." style="-fx-text-fill: #7A6B66;" />
+            </placeholder>
         </TableView>
     </VBox>
 
     <!-- ============================================================
-         VIEW 3: ADMIN APPROVALS & ALL BOOKINGS (FR-BKG-07, FR-BKG-09)
+         VIEW 3: ADMIN APPROVALS CONSOLE (FR-BKG-06, FR-BKG-07)
          ============================================================ -->
-    <VBox fx:id="adminApprovalsPane" visible="false" managed="false" spacing="14" VBox.vgrow="ALWAYS">
-        <VBox styleClass="card" spacing="12">
-            <HBox spacing="14" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="FILTER DATE" styleClass="field-label" />
-                    <DatePicker fx:id="adminDatePicker" prefWidth="160" />
-                </VBox>
+    <VBox fx:id="adminApprovalsPane" spacing="14" visible="false" managed="false" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="Pending &amp; Reviewed Reservations" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label text="Filter Date:" style="-fx-font-size: 12px; -fx-text-fill: #7A6B66;" />
+            <DatePicker fx:id="adminDatePicker" prefWidth="150" />
+            <ComboBox fx:id="adminStatusFilterCombo" prefWidth="130" />
+            <Button text="↻ Refresh" styleClass="btn-secondary" onAction="#loadAdminBookings" />
+        </HBox>
 
-                <VBox spacing="4">
-                    <Label text="STATUS" styleClass="field-label" />
-                    <ComboBox fx:id="adminStatusFilterCombo" prefWidth="150" />
-                </VBox>
-
-                <VBox spacing="4" alignment="BOTTOM_LEFT">
-                    <Button text="Filter Bookings" styleClass="btn-primary" onAction="#handleFilterAdminBookings" />
-                </VBox>
-
-                <VBox spacing="4" alignment="BOTTOM_LEFT">
-                    <Button text="Reset Filters" styleClass="btn-secondary" onAction="#handleResetAdminFilters" />
-                </VBox>
-            </HBox>
-        </VBox>
-
-        <TableView fx:id="adminBookingsTable" VBox.vgrow="ALWAYS">
+        <TableView fx:id="adminBookingsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
             <columns>
-                <TableColumn fx:id="colAdminId" text="ID" prefWidth="60" />
+                <TableColumn fx:id="colAdminId" text="ID" prefWidth="55" />
                 <TableColumn fx:id="colAdminUser" text="Requested By" prefWidth="140" />
-                <TableColumn fx:id="colAdminFacility" text="Facility" prefWidth="180" />
-                <TableColumn fx:id="colAdminDate" text="Date" prefWidth="110" />
-                <TableColumn fx:id="colAdminSlot" text="Slot" prefWidth="120" />
-                <TableColumn fx:id="colAdminAttendees" text="Count" prefWidth="70" />
+                <TableColumn fx:id="colAdminFacility" text="Facility" prefWidth="160" />
+                <TableColumn fx:id="colAdminDate" text="Date" prefWidth="100" />
+                <TableColumn fx:id="colAdminSlot" text="Time Slot" prefWidth="120" />
+                <TableColumn fx:id="colAdminAttendees" text="Attendees" prefWidth="85" />
                 <TableColumn fx:id="colAdminPurpose" text="Purpose" prefWidth="180" />
-                <TableColumn fx:id="colAdminStatus" text="Status" prefWidth="120" />
-                <TableColumn fx:id="colAdminActions" text="Decision" prefWidth="170" />
+                <TableColumn fx:id="colAdminStatus" text="Status" prefWidth="100" />
+                <TableColumn fx:id="colAdminActions" text="Actions" prefWidth="160" />
             </columns>
+            <placeholder>
+                <Label text="No booking requests found for the selected filter." style="-fx-text-fill: #7A6B66;" />
+            </placeholder>
         </TableView>
     </VBox>
 

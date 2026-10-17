@@ -524,6 +524,13 @@ public class StaffController {
 
                     dialogStage.close();
                     applyFilters();
+
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Staff Record Saved");
+                    success.setHeaderText(existingStaff == null ? "Staff Member Registered!" : "Staff Member Updated!");
+                    success.setContentText(String.format("Staff specialization: %s • Phone: %s",
+                            chosenSpec != null ? chosenSpec.name() : "General", phone != null ? phone : "—"));
+                    success.showAndWait();
                 } catch (InvalidInputException ex) {
                     dialogErrorLabel.setText(ex.getMessage());
                     dialogErrorLabel.setVisible(true);

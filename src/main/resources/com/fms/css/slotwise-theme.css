@@ -999,3 +999,67 @@
     -fx-text-fill: #C9A84C;
 }
 
+/* ----------------------------------------------------------------
+ * RESERVATION DRAWER & CHIPS
+ * ---------------------------------------------------------------- */
+
+.reservation-drawer {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-border-color: #E5DDD0;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(74, 62, 61, 0.08), 12, 0, 0, 3);
+}
+
+.drawer-header {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3E3D;
+}
+
+.drawer-badge-extended {
+    -fx-background-color: rgba(201, 168, 76, 0.20);
+    -fx-border-color: #C9A84C;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6 10;
+}
+
+.drawer-badge-instant {
+    -fx-background-color: rgba(107, 143, 113, 0.16);
+    -fx-border-color: #6B8F71;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6 10;
+}
+
+.slot-chip {
+    -fx-background-color: #F8F5F0;
+    -fx-border-color: #D97757;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-padding: 4 10;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #D97757;
+}
+
+.quick-action-btn {
+    -fx-background-color: #F8F5F0;
+    -fx-border-color: #E5DDD0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 5 10;
+    -fx-font-size: 11px;
+    -fx-text-fill: #4A3E3D;
+    -fx-cursor: hand;
+}
+
+.quick-action-btn:hover {
+    -fx-background-color: #ECE5DC;
+    -fx-border-color: #C8BFB3;
+}
+
+

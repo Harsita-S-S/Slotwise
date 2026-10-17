@@ -5,66 +5,110 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      spacing="18" styleClass="card" prefWidth="480"
-      style="-fx-background-color: #FFFFFF; -fx-padding: 28;">
+      spacing="16" styleClass="card" prefWidth="540" maxWidth="560"
+      style="-fx-background-color: #FFFFFF; -fx-padding: 24;">
 
     <!-- Dialog Header -->
     <VBox spacing="4">
-        <Label text="Confirm Facility Reservation" styleClass="card-title" style="-fx-font-size: 18px;" />
-        <Label text="Review your selected time slots and provide reservation details." styleClass="card-subtitle" />
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="📅" style="-fx-font-size: 20px;" />
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Reserve Facility" styleClass="card-title" style="-fx-font-size: 19px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                <Label text="Select your space, schedule dates and time slots, and confirm reservation."
+                       styleClass="card-subtitle" style="-fx-font-size: 12px; -fx-text-fill: #7A6B66;" />
+            </VBox>
+        </HBox>
     </VBox>
 
     <Separator />
 
     <!-- Error message banner -->
-    <Label fx:id="dialogErrorLabel" text="" styleClass="error-label" visible="false" managed="false" wrapText="true" />
+    <Label fx:id="dialogErrorLabel" text="" styleClass="error-label" visible="false" managed="false" wrapText="true"
+           style="-fx-background-color: rgba(217, 83, 79, 0.12); -fx-border-color: #D9534F; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12; -fx-text-fill: #A13D3D;" />
 
-    <!-- Summary Box -->
-    <VBox spacing="8" style="-fx-background-color: #F8F5F0; -fx-border-color: #E5DDD0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14;">
-        <HBox spacing="10">
-            <Label text="Facility:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
-            <Label fx:id="dlgFacilityLabel" text="Main Auditorium" style="-fx-text-fill: #3E3232;" />
-        </HBox>
-        <HBox spacing="10">
-            <Label text="Date:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
-            <Label fx:id="dlgDateLabel" text="2026-10-18" style="-fx-text-fill: #3E3232;" />
-        </HBox>
-        <HBox spacing="10">
-            <Label text="Selected Slots:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
-            <Label fx:id="dlgSlotsLabel" text="Slot 2, Slot 3 (09:00 - 11:00)" style="-fx-text-fill: #D97757; -fx-font-weight: bold;" />
-        </HBox>
-        <HBox spacing="10">
-            <Label text="Room Capacity:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
-            <Label fx:id="dlgCapacityLabel" text="Up to 50 persons" style="-fx-text-fill: #7A6B66;" />
-        </HBox>
-    </VBox>
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" maxHeight="420">
+        <VBox spacing="14" style="-fx-padding: 2 4;">
 
-    <!-- Form Inputs -->
-    <VBox spacing="14">
-        <VBox spacing="4">
-            <Label text="BOOKING PURPOSE *" styleClass="field-label" />
-            <TextField fx:id="dlgPurposeField" promptText="e.g. Java Programming Workshop, Guest Lecture, Club Meet" />
+            <!-- Facility Selection -->
+            <VBox spacing="4">
+                <Label text="FACILITY / ROOM *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                <ComboBox fx:id="dlgFacilityCombo" maxWidth="Infinity" promptText="Choose a room or hall..." styleClass="combo-box" />
+            </VBox>
+
+            <!-- Date Selection Mode -->
+            <VBox spacing="8" style="-fx-background-color: #F8F5F0; -fx-border-color: #E5DDD0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <Label text="BOOKING DURATION:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                    <RadioButton fx:id="rbSingleDay" text="Single Day" selected="true">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="dateModeGroup" />
+                        </toggleGroup>
+                    </RadioButton>
+                    <RadioButton fx:id="rbMultiDay" text="Multi-Day Range" toggleGroup="$dateModeGroup" />
+                </HBox>
+
+                <!-- Single Day DatePicker -->
+                <HBox fx:id="singleDateBox" spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Date:" style="-fx-min-width: 75; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                    <DatePicker fx:id="dlgDatePicker" HBox.hgrow="ALWAYS" prefWidth="220" />
+                </HBox>
+
+                <!-- Multi-Day DatePickers -->
+                <HBox fx:id="multiDateBox" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
+                    <Label text="From:" style="-fx-min-width: 45; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                    <DatePicker fx:id="dlgStartDatePicker" prefWidth="170" />
+                    <Label text="To:" style="-fx-min-width: 30; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                    <DatePicker fx:id="dlgEndDatePicker" prefWidth="170" />
+                </HBox>
+            </VBox>
+
+            <!-- Time Slot Selection -->
+            <VBox spacing="8" style="-fx-background-color: #F8F5F0; -fx-border-color: #E5DDD0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="TIME SLOTS:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <CheckBox fx:id="chkFullDay" text="⚡ Full Day (08:00 – 18:00)" style="-fx-font-weight: bold; -fx-text-fill: #D97757;" />
+                </HBox>
+
+                <!-- Start & End Time Range Dropdowns -->
+                <HBox fx:id="timeRangeBox" spacing="10" alignment="CENTER_LEFT">
+                    <Label text="From:" style="-fx-min-width: 45; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                    <ComboBox fx:id="comboStartTime" prefWidth="110" />
+                    <Label text="To:" style="-fx-min-width: 30; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                    <ComboBox fx:id="comboEndTime" prefWidth="110" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="lblSlotSummary" text="1 slot (1 hr)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;" />
+                </HBox>
+            </VBox>
+
+            <!-- Form Inputs -->
+            <VBox spacing="4">
+                <Label text="BOOKING PURPOSE *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                <TextField fx:id="dlgPurposeField" promptText="e.g. Lab Session, Seminar, Guest Lecture, Club Meeting" />
+            </VBox>
+
+            <VBox spacing="4">
+                <Label text="EXPECTED ATTENDEES COUNT *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                <TextField fx:id="dlgAttendeesField" promptText="Enter number of attendees" />
+                <Label fx:id="dlgCapacityFeedback" text="" wrapText="true" style="-fx-font-size: 11px;" visible="false" managed="false" />
+            </VBox>
+
+            <!-- Approval Notice -->
+            <HBox fx:id="dlgApprovalNotice" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
+                  style="-fx-background-color: rgba(201, 168, 76, 0.15); -fx-border-color: #C9A84C; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;">
+                <Label fx:id="dlgApprovalNoticeLabel" text="ℹ This facility requires Admin approval. Your booking will start as 'Pending'."
+                       style="-fx-font-size: 11px; -fx-text-fill: #856404;" wrapText="true" />
+            </HBox>
+
         </VBox>
-
-        <VBox spacing="4">
-            <Label text="EXPECTED ATTENDEES COUNT *" styleClass="field-label" />
-            <TextField fx:id="dlgAttendeesField" promptText="Must be between 1 and room capacity" />
-        </VBox>
-
-        <!-- Approval Notice -->
-        <HBox fx:id="dlgApprovalNotice" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
-              style="-fx-background-color: rgba(201, 168, 76, 0.15); -fx-border-color: #C9A84C; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;">
-            <Label text="ℹ This facility requires Admin approval. Your booking will start as 'Pending'."
-                   style="-fx-font-size: 11px; -fx-text-fill: #856404;" wrapText="true" />
-        </HBox>
-    </VBox>
+    </ScrollPane>
 
     <Separator />
 
     <!-- Action Buttons -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
-        <Button text="Cancel" styleClass="btn-secondary" onAction="#handleCancelDialog" />
-        <Button text="Confirm Reservation" styleClass="btn-primary" onAction="#handleConfirmBooking" />
+        <Button fx:id="btnCancel" text="Cancel" styleClass="btn-secondary" />
+        <Button fx:id="btnConfirm" text="Confirm Reservation" styleClass="btn-primary" />
     </HBox>
 
 </VBox>

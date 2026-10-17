@@ -1,5 +1,6 @@
 package com.fms.controller;
 
+import com.fms.dao.FacilityDAO;
 import com.fms.exception.BookingConflictException;
 import com.fms.exception.InvalidInputException;
 import com.fms.model.*;
@@ -9,9 +10,11 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -23,43 +26,45 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
- * Controller for Module 5: Availability Search and Booking.
- * Handles interactive 10-slot visual grid, multi-slot selection (BR-03),
- * modal reservation confirmation, cancellation (BR-05), and Admin approvals (FR-BKG-07).
+ * Controller for Module 5: Availability Search & Room Booking.
+ * Provides a clean, modern facility directory with direct booking,
+ * multi-day and full-day reservation dialog, user self-service, and admin approvals.
  */
 public class BookingController {
+
     private static final Logger logger = LoggerFactory.getLogger(BookingController.class);
 
-    // Header tabs
+    // Top Header & View Tabs
     @FXML private Button btnTabAvailability;
     @FXML private Button btnTabMyBookings;
     @FXML private Button btnTabAdminApprovals;
-
-    // Feedback alert
     @FXML private HBox alertBanner;
     @FXML private Label alertMessageLabel;
 
-    // View 1: Availability
+    // View 1: Facility Directory & Booking
     @FXML private VBox availabilityPane;
-    @FXML private DatePicker datePicker;
+    @FXML private TextField searchField;
     @FXML private ComboBox<String> typeFilterCombo;
     @FXML private TextField minCapacityField;
-    @FXML private TextField amenityFilterField;
-    @FXML private VBox matrixContainer;
+    @FXML private Button btnNewBooking;
 
-    // Selection floating bar
-    @FXML private HBox selectionBar;
-    @FXML private Label selectionFacilityLabel;
-    @FXML private Label selectionSlotsLabel;
-    @FXML private Button btnProceedBooking;
+    @FXML private TableView<Facility> facilityTable;
+    @FXML private TableColumn<Facility, String> colFacilityName;
+    @FXML private TableColumn<Facility, String> colFacilityType;
+    @FXML private TableColumn<Facility, String> colFacilityLocation;
+    @FXML private TableColumn<Facility, Integer> colFacilityCapacity;
+    @FXML private TableColumn<Facility, String> colFacilityAmenities;
+    @FXML private TableColumn<Facility, Void> colFacilityPolicy;
+    @FXML private TableColumn<Facility, Void> colFacilityAction;
 
     // View 2: My Bookings
     @FXML private VBox myBookingsPane;
@@ -89,394 +94,485 @@ public class BookingController {
     @FXML private TableColumn<Booking, Void> colAdminActions;
 
     private final BookingService bookingService = new BookingService();
+    private final FacilityDAO facilityDAO = new FacilityDAO();
 
-    // Active slot selection state (BR-03)
-    private Facility selectedFacility = null;
-    private final Set<Integer> selectedSlots = new TreeSet<>();
-    private final Map<Integer, Button> activeSlotButtons = new HashMap<>();
+    private final ObservableList<Facility> masterFacilityList = FXCollections.observableArrayList();
+    private FilteredList<Facility> filteredFacilityList;
 
     @FXML
     public void initialize() {
-        setupDatePickers();
+        setupViewTabs();
+        setupFacilityTable();
         setupFilters();
         setupMyBookingsTable();
         setupAdminTable();
 
-        // Admin tab visibility
-        boolean isAdmin = SessionManager.getInstance().isAdmin();
-        btnTabAdminApprovals.setVisible(isAdmin);
-        btnTabAdminApprovals.setManaged(isAdmin);
-
-        // Load initial grid
-        handleSearchSlots();
+        loadFacilities();
+        handleSwitchToAvailability();
     }
 
-    private void setupDatePickers() {
-        datePicker.setValue(LocalDate.now());
+    private void setupViewTabs() {
+        boolean isAdmin = SessionManager.getInstance().isAdmin();
+        if (btnTabAdminApprovals != null) {
+            btnTabAdminApprovals.setVisible(isAdmin);
+            btnTabAdminApprovals.setManaged(isAdmin);
+        }
+    }
 
-        // Restrict dates to today up to +30 days (BR-02)
-        datePicker.setDayCellFactory(picker -> new DateCell() {
+    // ---------------------------------------------------------------
+    // View Switching
+    // ---------------------------------------------------------------
+
+    @FXML
+    public void handleSwitchToAvailability() {
+        setTabActive(btnTabAvailability);
+        setPaneVisible(availabilityPane, true);
+        setPaneVisible(myBookingsPane, false);
+        setPaneVisible(adminApprovalsPane, false);
+        loadFacilities();
+    }
+
+    @FXML
+    public void handleSwitchToMyBookings() {
+        setTabActive(btnTabMyBookings);
+        setPaneVisible(availabilityPane, false);
+        setPaneVisible(myBookingsPane, true);
+        setPaneVisible(adminApprovalsPane, false);
+        loadMyBookings();
+    }
+
+    @FXML
+    public void handleSwitchToAdminApprovals() {
+        setTabActive(btnTabAdminApprovals);
+        setPaneVisible(availabilityPane, false);
+        setPaneVisible(myBookingsPane, false);
+        setPaneVisible(adminApprovalsPane, true);
+        loadAdminBookings();
+    }
+
+    private void setTabActive(Button activeBtn) {
+        if (btnTabAvailability != null) btnTabAvailability.getStyleClass().setAll("view-toggle-btn");
+        if (btnTabMyBookings != null) btnTabMyBookings.getStyleClass().setAll("view-toggle-btn");
+        if (btnTabAdminApprovals != null) btnTabAdminApprovals.getStyleClass().setAll("view-toggle-btn");
+
+        if (activeBtn != null) {
+            activeBtn.getStyleClass().setAll("view-toggle-btn-active");
+        }
+    }
+
+    private void setPaneVisible(VBox pane, boolean visible) {
+        if (pane != null) {
+            pane.setVisible(visible);
+            pane.setManaged(visible);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // View 1: Facility Directory & Search
+    // ---------------------------------------------------------------
+
+    private void setupFacilityTable() {
+        filteredFacilityList = new FilteredList<>(masterFacilityList, p -> true);
+        facilityTable.setItems(filteredFacilityList);
+
+        colFacilityName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
+        colFacilityType.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getType() != null ? c.getValue().getType().name() : "Other"));
+
+        colFacilityLocation.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getBuilding() + " • Floor " + c.getValue().getFloor()));
+
+        colFacilityCapacity.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getCapacity()).asObject());
+        colFacilityAmenities.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getAmenities() != null && !c.getValue().getAmenities().isBlank()
+                        ? c.getValue().getAmenities() : "Standard"));
+
+        // Approval Policy Badge Column
+        colFacilityPolicy.setCellFactory(col -> new TableCell<>() {
             @Override
-            public void updateItem(LocalDate item, boolean empty) {
+            protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                LocalDate today = LocalDate.now();
-                if (item.isBefore(today) || item.isAfter(today.plusDays(30))) {
-                    setDisable(true);
-                    setStyle("-fx-background-color: #EEE8DF; -fx-text-fill: #A89F91;");
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Facility f = getTableRow().getItem();
+                    Label badge = new Label();
+                    if (f.isRequiresApproval()) {
+                        badge.setText("⏳ Needs Approval");
+                        badge.setStyle("-fx-background-color: rgba(201, 168, 76, 0.18); -fx-text-fill: #94711E; -fx-padding: 3 8; -fx-background-radius: 6; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    } else {
+                        badge.setText("✓ Instant");
+                        badge.setStyle("-fx-background-color: rgba(107, 143, 113, 0.18); -fx-text-fill: #3D6844; -fx-padding: 3 8; -fx-background-radius: 6; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    }
+                    setGraphic(badge);
+                }
+            }
+        });
+
+        // Direct "Book Room" Action Button Column
+        colFacilityAction.setCellFactory(col -> new TableCell<>() {
+            private final Button bookBtn = new Button("📅 Book");
+            {
+                bookBtn.getStyleClass().add("btn-primary");
+                bookBtn.setStyle("-fx-font-size: 11px; -fx-padding: 5 12;");
+                bookBtn.setOnAction(e -> {
+                    Facility f = getTableRow().getItem();
+                    if (f != null) {
+                        openBookingDialog(f);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(bookBtn);
                 }
             }
         });
     }
 
     private void setupFilters() {
-        typeFilterCombo.setItems(FXCollections.observableArrayList("All Types", "Classroom", "Laboratory", "Hall"));
-        typeFilterCombo.setValue("All Types");
-
-        adminStatusFilterCombo.setItems(FXCollections.observableArrayList("All Statuses", "Pending", "Approved", "Rejected", "Cancelled", "Completed"));
-        adminStatusFilterCombo.setValue("All Statuses");
-    }
-
-    // ---------------------------------------------------------------
-    // Sub-Navigation Tabs
-    // ---------------------------------------------------------------
-
-    @FXML
-    private void handleSwitchToAvailability() {
-        setActiveTabButton(btnTabAvailability);
-        availabilityPane.setVisible(true);
-        availabilityPane.setManaged(true);
-        myBookingsPane.setVisible(false);
-        myBookingsPane.setManaged(false);
-        adminApprovalsPane.setVisible(false);
-        adminApprovalsPane.setManaged(false);
-        handleSearchSlots();
-    }
-
-    @FXML
-    private void handleSwitchToMyBookings() {
-        setActiveTabButton(btnTabMyBookings);
-        availabilityPane.setVisible(false);
-        availabilityPane.setManaged(false);
-        myBookingsPane.setVisible(true);
-        myBookingsPane.setManaged(true);
-        adminApprovalsPane.setVisible(false);
-        adminApprovalsPane.setManaged(false);
-        handleRefreshMyBookings();
-    }
-
-    @FXML
-    private void handleSwitchToAdminApprovals() {
-        setActiveTabButton(btnTabAdminApprovals);
-        availabilityPane.setVisible(false);
-        availabilityPane.setManaged(false);
-        myBookingsPane.setVisible(false);
-        myBookingsPane.setManaged(false);
-        adminApprovalsPane.setVisible(true);
-        adminApprovalsPane.setManaged(true);
-        handleFilterAdminBookings();
-    }
-
-    private void setActiveTabButton(Button active) {
-        btnTabAvailability.getStyleClass().setAll("view-toggle-btn");
-        btnTabMyBookings.getStyleClass().setAll("view-toggle-btn");
-        btnTabAdminApprovals.getStyleClass().setAll("view-toggle-btn");
-        active.getStyleClass().setAll("view-toggle-btn-active");
-    }
-
-    // ---------------------------------------------------------------
-    // Visual Slot Matrix (FR-BKG-01, FR-BKG-02)
-    // ---------------------------------------------------------------
-
-    @FXML
-    private void handleSearchSlots() {
-        LocalDate chosenDate = datePicker.getValue() != null ? datePicker.getValue() : LocalDate.now();
-
-        String typeStr = typeFilterCombo.getValue();
-        FacilityType facilityType = null;
-        if (typeStr != null && !typeStr.equals("All Types")) {
-            facilityType = FacilityType.valueOf(typeStr);
+        if (typeFilterCombo != null) {
+            List<String> types = new ArrayList<>();
+            types.add("All Types");
+            for (FacilityType ft : FacilityType.values()) {
+                types.add(ft.name());
+            }
+            typeFilterCombo.setItems(FXCollections.observableArrayList(types));
+            typeFilterCombo.setValue("All Types");
+            typeFilterCombo.valueProperty().addListener((obs, oldV, newV) -> applyFilters());
         }
 
-        Integer minCapacity = null;
-        if (minCapacityField.getText() != null && !minCapacityField.getText().trim().isEmpty()) {
-            try {
-                minCapacity = Integer.parseInt(minCapacityField.getText().trim());
-            } catch (NumberFormatException ignored) {}
+        if (searchField != null) {
+            searchField.textProperty().addListener((obs, oldV, newV) -> applyFilters());
         }
 
-        String amenity = amenityFilterField.getText() != null && !amenityFilterField.getText().trim().isEmpty() ?
-                amenityFilterField.getText().trim() : null;
-
-        List<FacilitySlotSummary> summaries = bookingService.getFacilitySlotGrid(chosenDate, facilityType, minCapacity, amenity);
-        renderMatrix(summaries, chosenDate);
+        if (minCapacityField != null) {
+            minCapacityField.textProperty().addListener((obs, oldV, newV) -> applyFilters());
+        }
     }
 
-    private void renderMatrix(List<FacilitySlotSummary> summaries, LocalDate date) {
-        matrixContainer.getChildren().clear();
-        clearSlotSelection();
+    private void applyFilters() {
+        String query = searchField != null && searchField.getText() != null
+                ? searchField.getText().trim().toLowerCase() : "";
+        String selectedType = typeFilterCombo != null ? typeFilterCombo.getValue() : "All Types";
+        String capText = minCapacityField != null && minCapacityField.getText() != null
+                ? minCapacityField.getText().trim() : "";
 
-        if (summaries.isEmpty()) {
-            VBox emptyBox = new VBox(10);
-            emptyBox.setAlignment(Pos.CENTER);
-            emptyBox.setPadding(new javafx.geometry.Insets(40));
-            emptyBox.getChildren().addAll(
-                new Label("No active facilities found matching your criteria."),
-                new Label("Try clearing the amenity or capacity filters.")
-            );
-            matrixContainer.getChildren().add(emptyBox);
-            return;
+        int minCap = 0;
+        if (!capText.isEmpty()) {
+            try { minCap = Integer.parseInt(capText); } catch (NumberFormatException ignored) {}
         }
+        final int filterMinCap = minCap;
 
-        // Header timeline row
-        HBox timelineHeader = new HBox(8);
-        timelineHeader.setAlignment(Pos.CENTER_LEFT);
-        timelineHeader.setPadding(new javafx.geometry.Insets(6, 16, 6, 16));
+        filteredFacilityList.setPredicate(facility -> {
+            if (facility == null) return false;
 
-        Label roomHeaderLabel = new Label("FACILITY / ROOM");
-        roomHeaderLabel.setPrefWidth(240);
-        roomHeaderLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #7A6B66; -fx-font-size: 11px;");
-        timelineHeader.getChildren().add(roomHeaderLabel);
-
-        for (int i = 1; i <= 10; i++) {
-            Label slotHdr = new Label(Booking.formatSlotTime(i).replace(" - ", "\n"));
-            slotHdr.setPrefWidth(72);
-            slotHdr.setAlignment(Pos.CENTER);
-            slotHdr.setStyle("-fx-font-size: 9px; -fx-text-fill: #7A6B66; -fx-font-weight: bold; -fx-text-alignment: center;");
-            timelineHeader.getChildren().add(slotHdr);
-        }
-        matrixContainer.getChildren().add(timelineHeader);
-
-        // Facility rows
-        for (FacilitySlotSummary summary : summaries) {
-            Facility facility = summary.getFacility();
-
-            HBox row = new HBox(8);
-            row.setAlignment(Pos.CENTER_LEFT);
-            row.getStyleClass().add("card");
-            row.setStyle("-fx-padding: 12 16;");
-
-            // Left room info column
-            VBox roomInfo = new VBox(4);
-            roomInfo.setPrefWidth(240);
-
-            Label nameLbl = new Label(facility.getName());
-            nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #4A3E3D;");
-
-            HBox tags = new HBox(6);
-            Label bldgLbl = new Label(facility.getBuilding() + " (Fl " + facility.getFloor() + ")");
-            bldgLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #7A6B66;");
-
-            Label capLbl = new Label("Cap: " + facility.getCapacity());
-            capLbl.getStyleClass().add("amenity-tag");
-
-            tags.getChildren().addAll(bldgLbl, capLbl);
-
-            if (facility.isRequiresApproval()) {
-                Label appLbl = new Label("Approval Req.");
-                appLbl.getStyleClass().add("badge-approval");
-                tags.getChildren().add(appLbl);
+            // Search query matches name, building, or amenities
+            if (!query.isEmpty()) {
+                boolean matchesName = facility.getName() != null && facility.getName().toLowerCase().contains(query);
+                boolean matchesBldg = facility.getBuilding() != null && facility.getBuilding().toLowerCase().contains(query);
+                boolean matchesAmen = facility.getAmenities() != null && facility.getAmenities().toLowerCase().contains(query);
+                if (!matchesName && !matchesBldg && !matchesAmen) return false;
             }
 
-            roomInfo.getChildren().addAll(nameLbl, tags);
-            row.getChildren().add(roomInfo);
-
-            // 10 Slot buttons
-            for (int slot = 1; slot <= 10; slot++) {
-                SlotStatus status = summary.getStatusForSlot(slot);
-                Button slotBtn = new Button();
-                slotBtn.getStyleClass().add("slot-btn");
-
-                final int slotNo = slot;
-                switch (status) {
-                    case FREE:
-                        slotBtn.setText("Free");
-                        slotBtn.getStyleClass().add("slot-free");
-                        slotBtn.setOnAction(e -> handleSlotClicked(facility, slotNo, slotBtn));
-                        break;
-                    case BOOKED:
-                        slotBtn.setText("Booked");
-                        slotBtn.getStyleClass().add("slot-booked");
-                        slotBtn.setDisable(true);
-                        break;
-                    case PENDING:
-                        slotBtn.setText("Pending");
-                        slotBtn.getStyleClass().add("slot-pending");
-                        slotBtn.setDisable(true);
-                        break;
-                    case MAINTENANCE:
-                        slotBtn.setText("Maint.");
-                        slotBtn.getStyleClass().add("slot-maintenance");
-                        slotBtn.setDisable(true);
-                        break;
-                    case PAST:
-                        slotBtn.setText("Passed");
-                        slotBtn.getStyleClass().add("slot-past");
-                        slotBtn.setDisable(true);
-                        break;
+            // Type filter
+            if (selectedType != null && !selectedType.equals("All Types")) {
+                if (facility.getType() == null || !facility.getType().name().equalsIgnoreCase(selectedType)) {
+                    return false;
                 }
-
-                row.getChildren().add(slotBtn);
             }
 
-            matrixContainer.getChildren().add(row);
-        }
-    }
-
-    private void handleSlotClicked(Facility facility, int slotNo, Button btn) {
-        // If clicking a slot on a different room, clear previous selection first
-        if (selectedFacility != null && selectedFacility.getFacilityId() != facility.getFacilityId()) {
-            clearSlotSelection();
-        }
-
-        selectedFacility = facility;
-
-        if (selectedSlots.contains(slotNo)) {
-            // Deselect
-            selectedSlots.remove(slotNo);
-            btn.getStyleClass().remove("slot-selected");
-            btn.getStyleClass().add("slot-free");
-            btn.setText("Free");
-            activeSlotButtons.remove(slotNo);
-        } else {
-            // Select up to 3 slots (BR-03)
-            if (selectedSlots.size() >= 3) {
-                showAlert("Maximum 3 slots can be booked in a single request (BR-03).");
-                return;
+            // Min capacity filter
+            if (filterMinCap > 0 && facility.getCapacity() < filterMinCap) {
+                return false;
             }
-            selectedSlots.add(slotNo);
-            btn.getStyleClass().remove("slot-free");
-            btn.getStyleClass().add("slot-selected");
-            btn.setText("✓ Slot " + slotNo);
-            activeSlotButtons.put(slotNo, btn);
-        }
 
-        updateSelectionBar();
-    }
-
-    private void updateSelectionBar() {
-        if (selectedSlots.isEmpty() || selectedFacility == null) {
-            selectionBar.setVisible(false);
-            selectionBar.setManaged(false);
-            return;
-        }
-
-        selectionBar.setVisible(true);
-        selectionBar.setManaged(true);
-        selectionFacilityLabel.setText("Selected Room: " + selectedFacility.getName() + " (" + selectedFacility.getBuilding() + ")");
-
-        StringBuilder slotsDesc = new StringBuilder("Slots: ");
-        int count = 0;
-        for (int s : selectedSlots) {
-            if (count > 0) slotsDesc.append(", ");
-            slotsDesc.append("Slot ").append(s).append(" (").append(Booking.formatSlotTime(s)).append(")");
-            count++;
-        }
-        selectionSlotsLabel.setText(slotsDesc + " | Total: " + selectedSlots.size() + " hr(s)");
+            return true;
+        });
     }
 
     @FXML
-    private void handleClearSelection() {
-        clearSlotSelection();
+    private void handleResetFilters() {
+        if (searchField != null) searchField.clear();
+        if (typeFilterCombo != null) typeFilterCombo.setValue("All Types");
+        if (minCapacityField != null) minCapacityField.clear();
+        applyFilters();
     }
 
-    private void clearSlotSelection() {
-        for (Map.Entry<Integer, Button> entry : activeSlotButtons.entrySet()) {
-            Button btn = entry.getValue();
-            btn.getStyleClass().remove("slot-selected");
-            btn.getStyleClass().add("slot-free");
-            btn.setText("Free");
-        }
-        selectedSlots.clear();
-        activeSlotButtons.clear();
-        selectedFacility = null;
-        if (selectionBar != null) {
-            selectionBar.setVisible(false);
-            selectionBar.setManaged(false);
+    private void loadFacilities() {
+        try {
+            List<Facility> active = facilityDAO.findAllActive();
+            masterFacilityList.setAll(active);
+            applyFilters();
+        } catch (Exception e) {
+            logger.error("Failed to load facilities for booking: {}", e.getMessage(), e);
+            showAlert("Failed to load facilities: " + e.getMessage());
         }
     }
-
-    // ---------------------------------------------------------------
-    // Booking Confirmation Dialog
-    // ---------------------------------------------------------------
 
     @FXML
-    private void handleOpenBookingModal() {
-        if (selectedFacility == null || selectedSlots.isEmpty()) {
-            showAlert("Please select at least 1 free time slot to proceed.");
-            return;
-        }
+    public void handleOpenNewBookingDialog() {
+        openBookingDialog(null);
+    }
 
+    // ---------------------------------------------------------------
+    // Booking Dialog Workflow (Single-Day & Multi-Day Support)
+    // ---------------------------------------------------------------
+
+    public void openBookingDialog(Facility preselectedFacility) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/fms/view/booking_dialog.fxml"));
             Parent root = loader.load();
 
             Stage dialogStage = new Stage();
             dialogStage.initModality(Modality.APPLICATION_MODAL);
-            dialogStage.setTitle("Confirm Reservation — " + selectedFacility.getName());
+            dialogStage.setTitle("Reserve Facility — SlotWise");
 
-            Label dlgFacilityLabel = (Label) root.lookup("#dlgFacilityLabel");
-            Label dlgDateLabel = (Label) root.lookup("#dlgDateLabel");
-            Label dlgSlotsLabel = (Label) root.lookup("#dlgSlotsLabel");
-            Label dlgCapacityLabel = (Label) root.lookup("#dlgCapacityLabel");
+            // Look up dialog elements
+            ComboBox<Facility> dlgFacilityCombo = (ComboBox<Facility>) root.lookup("#dlgFacilityCombo");
+            RadioButton rbSingleDay = (RadioButton) root.lookup("#rbSingleDay");
+            RadioButton rbMultiDay = (RadioButton) root.lookup("#rbMultiDay");
+            HBox singleDateBox = (HBox) root.lookup("#singleDateBox");
+            HBox multiDateBox = (HBox) root.lookup("#multiDateBox");
+            DatePicker dlgDatePicker = (DatePicker) root.lookup("#dlgDatePicker");
+            DatePicker dlgStartDatePicker = (DatePicker) root.lookup("#dlgStartDatePicker");
+            DatePicker dlgEndDatePicker = (DatePicker) root.lookup("#dlgEndDatePicker");
+
+            CheckBox chkFullDay = (CheckBox) root.lookup("#chkFullDay");
+            HBox timeRangeBox = (HBox) root.lookup("#timeRangeBox");
+            ComboBox<String> comboStartTime = (ComboBox<String>) root.lookup("#comboStartTime");
+            ComboBox<String> comboEndTime = (ComboBox<String>) root.lookup("#comboEndTime");
+            Label lblSlotSummary = (Label) root.lookup("#lblSlotSummary");
+
             TextField dlgPurposeField = (TextField) root.lookup("#dlgPurposeField");
             TextField dlgAttendeesField = (TextField) root.lookup("#dlgAttendeesField");
-            Label dlgErrorLabel = (Label) root.lookup("#dialogErrorLabel");
+            Label dlgCapacityFeedback = (Label) root.lookup("#dlgCapacityFeedback");
             HBox dlgApprovalNotice = (HBox) root.lookup("#dlgApprovalNotice");
-            Button btnConfirm = (Button) root.lookup(".btn-primary");
-            Button btnCancel = (Button) root.lookup(".btn-secondary");
+            Label dlgApprovalNoticeLabel = (Label) root.lookup("#dlgApprovalNoticeLabel");
+            Label dialogErrorLabel = (Label) root.lookup("#dialogErrorLabel");
 
-            LocalDate date = datePicker.getValue();
-            dlgFacilityLabel.setText(selectedFacility.getName() + " (" + selectedFacility.getBuilding() + ")");
-            dlgDateLabel.setText(date.toString());
-            dlgSlotsLabel.setText(selectedSlots.size() + " slot(s): " + selectedSlots.toString());
-            dlgCapacityLabel.setText("Up to " + selectedFacility.getCapacity() + " persons");
+            Button btnCancel = (Button) root.lookup("#btnCancel");
+            Button btnConfirm = (Button) root.lookup("#btnConfirm");
 
-            if (selectedFacility.isRequiresApproval()) {
-                dlgApprovalNotice.setVisible(true);
-                dlgApprovalNotice.setManaged(true);
+            // Populate facilities
+            List<Facility> facilities = facilityDAO.findAllActive();
+            dlgFacilityCombo.setItems(FXCollections.observableArrayList(facilities));
+            dlgFacilityCombo.setConverter(new StringConverter<>() {
+                @Override
+                public String toString(Facility f) {
+                    if (f == null) return "";
+                    return f.getName() + " (" + f.getBuilding() + " • Cap: " + f.getCapacity() + (f.isRequiresApproval() ? " • Appr. Required" : "") + ")";
+                }
+                @Override
+                public Facility fromString(String string) { return null; }
+            });
+
+            if (preselectedFacility != null) {
+                dlgFacilityCombo.setValue(preselectedFacility);
+            } else if (!facilities.isEmpty()) {
+                dlgFacilityCombo.setValue(facilities.get(0));
             }
 
+            // Smart date defaults (tomorrow if after 18:00 today)
+            LocalDate defaultDate = LocalTime.now().isAfter(LocalTime.of(18, 0))
+                    ? LocalDate.now().plusDays(1) : LocalDate.now();
+
+            dlgDatePicker.setValue(defaultDate);
+            dlgStartDatePicker.setValue(defaultDate);
+            dlgEndDatePicker.setValue(defaultDate.plusDays(1));
+
+            // Single vs Multi-Day toggle
+            rbSingleDay.selectedProperty().addListener((obs, oldV, isSingle) -> {
+                singleDateBox.setVisible(isSingle);
+                singleDateBox.setManaged(isSingle);
+                multiDateBox.setVisible(!isSingle);
+                multiDateBox.setManaged(!isSingle);
+            });
+
+            // Populate time combos (Slots 1 to 10: 08:00 to 18:00)
+            List<String> startTimes = List.of("08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00");
+            List<String> endTimes   = List.of("09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00");
+            comboStartTime.setItems(FXCollections.observableArrayList(startTimes));
+            comboEndTime.setItems(FXCollections.observableArrayList(endTimes));
+            comboStartTime.setValue("09:00");
+            comboEndTime.setValue("10:00");
+
+            // Helper to update slot summary label
+            Runnable updateSlotSummary = () -> {
+                if (chkFullDay.isSelected()) {
+                    timeRangeBox.setDisable(true);
+                    lblSlotSummary.setText("10 slots (Full Day: 08:00 – 18:00)");
+                } else {
+                    timeRangeBox.setDisable(false);
+                    int startIdx = startTimes.indexOf(comboStartTime.getValue());
+                    int endIdx = endTimes.indexOf(comboEndTime.getValue());
+                    if (startIdx >= 0 && endIdx >= 0 && endIdx >= startIdx) {
+                        int count = endIdx - startIdx + 1;
+                        lblSlotSummary.setText(count + " slot(s) (" + count + " hr" + (count > 1 ? "s" : "") + ")");
+                        lblSlotSummary.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;");
+                    } else {
+                        lblSlotSummary.setText("Invalid range (end before start)");
+                        lblSlotSummary.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #A13D3D;");
+                    }
+                }
+            };
+
+            chkFullDay.selectedProperty().addListener((obs, oldV, newV) -> updateSlotSummary.run());
+            comboStartTime.valueProperty().addListener((obs, oldV, newV) -> updateSlotSummary.run());
+            comboEndTime.valueProperty().addListener((obs, oldV, newV) -> updateSlotSummary.run());
+            updateSlotSummary.run();
+
+            // Live capacity feedback & approval notice update
+            Runnable updateFacilityFeedback = () -> {
+                Facility sel = dlgFacilityCombo.getValue();
+                if (sel != null) {
+                    if (sel.isRequiresApproval()) {
+                        dlgApprovalNotice.setVisible(true);
+                        dlgApprovalNotice.setManaged(true);
+                        dlgApprovalNoticeLabel.setText("ℹ '" + sel.getName() + "' requires Admin approval. Your booking will start as 'Pending'.");
+                    } else {
+                        dlgApprovalNotice.setVisible(false);
+                        dlgApprovalNotice.setManaged(false);
+                    }
+
+                    String attStr = dlgAttendeesField.getText();
+                    if (attStr != null && !attStr.isBlank()) {
+                        try {
+                            int att = Integer.parseInt(attStr.trim());
+                            if (att > sel.getCapacity()) {
+                                dlgCapacityFeedback.setText("⚠ Warning: " + att + " attendees exceeds room capacity of " + sel.getCapacity() + "!");
+                                dlgCapacityFeedback.setStyle("-fx-text-fill: #A13D3D; -fx-font-weight: bold; -fx-font-size: 11px;");
+                            } else {
+                                dlgCapacityFeedback.setText("✓ " + att + " attendees (fits inside capacity: " + sel.getCapacity() + ")");
+                                dlgCapacityFeedback.setStyle("-fx-text-fill: #3D6844; -fx-font-weight: bold; -fx-font-size: 11px;");
+                            }
+                            dlgCapacityFeedback.setVisible(true);
+                            dlgCapacityFeedback.setManaged(true);
+                        } catch (NumberFormatException ignored) {
+                            dlgCapacityFeedback.setVisible(false);
+                            dlgCapacityFeedback.setManaged(false);
+                        }
+                    } else {
+                        dlgCapacityFeedback.setVisible(false);
+                        dlgCapacityFeedback.setManaged(false);
+                    }
+                }
+            };
+
+            dlgFacilityCombo.valueProperty().addListener((obs, oldV, newV) -> updateFacilityFeedback.run());
+            dlgAttendeesField.textProperty().addListener((obs, oldV, newV) -> updateFacilityFeedback.run());
+            updateFacilityFeedback.run();
+
+            // Cancel button
             btnCancel.setOnAction(e -> dialogStage.close());
 
+            // Confirm button
             btnConfirm.setOnAction(e -> {
-                String purpose = dlgPurposeField.getText();
-                String attendeesStr = dlgAttendeesField.getText();
+                dialogErrorLabel.setVisible(false);
+                dialogErrorLabel.setManaged(false);
 
-                if (purpose == null || purpose.trim().isEmpty()) {
-                    showDialogError(dlgErrorLabel, "Please enter a purpose for this booking.");
+                Facility fac = dlgFacilityCombo.getValue();
+                if (fac == null) {
+                    showDialogError(dialogErrorLabel, "Please select a facility.");
                     return;
                 }
 
+                String purpose = dlgPurposeField.getText();
+                if (purpose == null || purpose.trim().isEmpty()) {
+                    showDialogError(dialogErrorLabel, "Please enter a booking purpose.");
+                    return;
+                }
+
+                String attStr = dlgAttendeesField.getText();
                 int attendees;
                 try {
-                    attendees = Integer.parseInt(attendeesStr.trim());
+                    attendees = Integer.parseInt(attStr != null ? attStr.trim() : "");
+                    if (attendees <= 0) {
+                        showDialogError(dialogErrorLabel, "Attendees must be greater than zero.");
+                        return;
+                    }
                 } catch (Exception ex) {
-                    showDialogError(dlgErrorLabel, "Attendees must be a valid number.");
+                    showDialogError(dialogErrorLabel, "Attendees count must be a valid number.");
                     return;
                 }
 
+                // Compute slots
+                List<Integer> slots = new ArrayList<>();
+                if (chkFullDay.isSelected()) {
+                    for (int s = 1; s <= 10; s++) slots.add(s);
+                } else {
+                    int startIdx = startTimes.indexOf(comboStartTime.getValue());
+                    int endIdx = endTimes.indexOf(comboEndTime.getValue());
+                    if (startIdx < 0 || endIdx < 0 || endIdx < startIdx) {
+                        showDialogError(dialogErrorLabel, "End time cannot be earlier than start time.");
+                        return;
+                    }
+                    for (int s = (startIdx + 1); s <= (endIdx + 1); s++) {
+                        slots.add(s);
+                    }
+                }
+
                 try {
-                    List<Booking> created = bookingService.createBooking(
-                            selectedFacility.getFacilityId(),
-                            date,
-                            new ArrayList<>(selectedSlots),
-                            purpose,
-                            attendees
-                    );
+                    List<Booking> created;
+                    if (rbSingleDay.isSelected()) {
+                        LocalDate bookingDate = dlgDatePicker.getValue();
+                        if (bookingDate == null) {
+                            showDialogError(dialogErrorLabel, "Please select a booking date.");
+                            return;
+                        }
+                        // Use requestExtendedApproval=true so full-day / multi-slot bookings route cleanly
+                        created = bookingService.createBooking(
+                                fac.getFacilityId(), bookingDate, slots, purpose, attendees, true, false);
+                    } else {
+                        LocalDate startDate = dlgStartDatePicker.getValue();
+                        LocalDate endDate = dlgEndDatePicker.getValue();
+                        if (startDate == null || endDate == null) {
+                            showDialogError(dialogErrorLabel, "Please specify both start date and end date.");
+                            return;
+                        }
+                        created = bookingService.createMultiDayBooking(
+                                fac.getFacilityId(), startDate, endDate, slots, purpose, attendees);
+                    }
 
                     dialogStage.close();
-                    String statusNote = created.get(0).getStatus() == BookingStatus.Pending
-                            ? " (Pending approval)"
-                            : " (Approved)";
-                    showSuccessToast("✓  Reserved " + created.size() + " slot(s) — " + selectedFacility.getName() + statusNote);
-                    handleSearchSlots();
+                    String statusText = (created != null && !created.isEmpty() && created.get(0).getStatus() == BookingStatus.Pending)
+                            ? "Pending Admin Approval" : "Confirmed & Approved";
 
-                } catch (BookingConflictException ex) {
-                    showDialogError(dlgErrorLabel, ex.getMessage());
-                } catch (InvalidInputException ex) {
-                    showDialogError(dlgErrorLabel, ex.getMessage());
+                    // Instant Reactive Table Refresh
+                    loadMyBookings();
+                    loadFacilities();
+                    if (SessionManager.getInstance().isAdmin()) {
+                        loadAdminBookings();
+                    }
+
+                    // Success Popup Confirmation
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Booking Success");
+                    successAlert.setHeaderText("Reservation Successfully Placed!");
+                    successAlert.setContentText(String.format(
+                            "Facility: %s (%s)\n" +
+                            "Slots: %d slot(s)\n" +
+                            "Attendees: %d\n" +
+                            "Purpose: %s\n" +
+                            "Status: %s",
+                            fac.getName(), fac.getBuilding(),
+                            created != null ? created.size() : 0,
+                            attendees, purpose, statusText
+                    ));
+                    successAlert.showAndWait();
+
+                } catch (BookingConflictException conflictEx) {
+                    showDialogError(dialogErrorLabel, conflictEx.getMessage());
+                } catch (InvalidInputException inputEx) {
+                    showDialogError(dialogErrorLabel, inputEx.getMessage());
                 } catch (Exception ex) {
-                    showDialogError(dlgErrorLabel, "Error: " + ex.getMessage());
+                    logger.error("Booking error: {}", ex.getMessage(), ex);
+                    showDialogError(dialogErrorLabel, "Booking error: " + ex.getMessage());
                 }
             });
 
@@ -485,19 +581,22 @@ public class BookingController {
             dialogStage.setScene(scene);
             dialogStage.showAndWait();
 
-        } catch (IOException e) {
-            logger.error("Failed to open booking confirmation dialog: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Failed to open booking dialog: {}", e.getMessage(), e);
+            showAlert("Could not open booking dialog: " + e.getMessage());
         }
     }
 
     private void showDialogError(Label label, String msg) {
-        label.setText(msg);
-        label.setVisible(true);
-        label.setManaged(true);
+        if (label != null) {
+            label.setText(msg);
+            label.setVisible(true);
+            label.setManaged(true);
+        }
     }
 
     // ---------------------------------------------------------------
-    // View 2: My Bookings (FR-BKG-08)
+    // View 2: My Bookings
     // ---------------------------------------------------------------
 
     private void setupMyBookingsTable() {
@@ -557,22 +656,30 @@ public class BookingController {
     }
 
     @FXML
-    private void handleRefreshMyBookings() {
-        List<Booking> bookings = bookingService.getMyBookings();
-        myBookingsTable.setItems(FXCollections.observableArrayList(bookings));
+    public void loadMyBookings() {
+        try {
+            List<Booking> bookings = bookingService.getMyBookings();
+            myBookingsTable.setItems(FXCollections.observableArrayList(bookings));
+        } catch (Exception e) {
+            logger.error("Error loading user bookings: {}", e.getMessage(), e);
+        }
     }
 
     private void handleCancelUserBooking(Booking b) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Are you sure you want to cancel your booking for " + b.getFacilityName() + " on " + b.getBookingDate() + " (Slot " + b.getSlotNo() + ")?",
+                "Cancel booking for " + b.getFacilityName() + " on " + b.getBookingDate() + " (Slot " + b.getSlotNo() + ")?",
                 ButtonType.YES, ButtonType.NO);
         confirm.setHeaderText("Confirm Cancellation");
         confirm.showAndWait().ifPresent(res -> {
             if (res == ButtonType.YES) {
                 try {
                     bookingService.cancelBooking(b.getBookingId());
-                    showAlert("Booking cancelled successfully.");
-                    handleRefreshMyBookings();
+                    loadMyBookings();
+                    Alert info = new Alert(Alert.AlertType.INFORMATION);
+                    info.setTitle("Booking Cancelled");
+                    info.setHeaderText("Reservation Cancelled Successfully");
+                    info.setContentText("Your booking for " + b.getFacilityName() + " on " + b.getBookingDate() + " has been cancelled.");
+                    info.showAndWait();
                 } catch (Exception ex) {
                     showAlert("Error cancelling booking: " + ex.getMessage());
                 }
@@ -581,12 +688,13 @@ public class BookingController {
     }
 
     // ---------------------------------------------------------------
-    // View 3: Admin Approvals (FR-BKG-07, FR-BKG-09)
+    // View 3: Admin Approvals Console
     // ---------------------------------------------------------------
 
     private void setupAdminTable() {
         colAdminId.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getBookingId())));
-        colAdminUser.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUserFullName() + " (" + c.getValue().getUsername() + ")"));
+        colAdminUser.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getUserFullName() != null ? c.getValue().getUserFullName() : c.getValue().getUsername()));
         colAdminFacility.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFacilityName()));
         colAdminDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBookingDate().toString()));
         colAdminSlot.setCellValueFactory(c -> new SimpleStringProperty("Slot " + c.getValue().getSlotNo()));
@@ -620,150 +728,145 @@ public class BookingController {
                     box.setAlignment(Pos.CENTER);
 
                     if (b.getStatus() == BookingStatus.Pending) {
-                        Button approveBtn = new Button("Approve");
-                        approveBtn.getStyleClass().add("btn-primary");
-                        approveBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 10;");
-                        approveBtn.setOnAction(e -> handleAdminApprove(b));
+                        Button approveBtn = new Button("✓ Approve");
+                        approveBtn.setStyle("-fx-background-color: #6B8F71; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 4 8;");
+                        approveBtn.setOnAction(e -> handleApproveBooking(b));
 
-                        Button rejectBtn = new Button("Reject");
-                        rejectBtn.getStyleClass().add("btn-danger");
-                        rejectBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 10;");
-                        rejectBtn.setOnAction(e -> handleAdminReject(b));
+                        Button rejectBtn = new Button("✕ Reject");
+                        rejectBtn.setStyle("-fx-background-color: #D9534F; -fx-text-fill: white; -fx-font-size: 11px; -fx-padding: 4 8;");
+                        rejectBtn.setOnAction(e -> handleRejectBooking(b));
 
                         box.getChildren().addAll(approveBtn, rejectBtn);
-                    } else if (b.getStatus() == BookingStatus.Approved && b.getBookingDate().isAfter(LocalDate.now())) {
-                        Button cancelBtn = new Button("Cancel");
-                        cancelBtn.getStyleClass().add("btn-secondary");
-                        cancelBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 10;");
-                        cancelBtn.setOnAction(e -> handleCancelUserBooking(b));
-                        box.getChildren().add(cancelBtn);
+                    } else {
+                        Label doneLbl = new Label("Processed");
+                        doneLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #7A6B66;");
+                        box.getChildren().add(doneLbl);
                     }
 
                     setGraphic(box);
                 }
             }
         });
-    }
 
-    @FXML
-    private void handleFilterAdminBookings() {
-        LocalDate date = adminDatePicker.getValue();
-        String statusStr = adminStatusFilterCombo.getValue();
-        BookingStatus status = null;
-        if (statusStr != null && !statusStr.equals("All Statuses")) {
-            status = BookingStatus.valueOf(statusStr);
+        if (adminStatusFilterCombo != null) {
+            adminStatusFilterCombo.setItems(FXCollections.observableArrayList("Pending", "All Statuses", "Approved", "Rejected"));
+            adminStatusFilterCombo.setValue("Pending");
+            adminStatusFilterCombo.valueProperty().addListener((obs, oldV, newV) -> loadAdminBookings());
         }
 
-        List<Booking> list = bookingService.searchAllBookings(date, null, null, status);
-        adminBookingsTable.setItems(FXCollections.observableArrayList(list));
+        if (adminDatePicker != null) {
+            adminDatePicker.valueProperty().addListener((obs, oldV, newV) -> loadAdminBookings());
+        }
     }
 
     @FXML
-    private void handleResetAdminFilters() {
-        adminDatePicker.setValue(null);
-        adminStatusFilterCombo.setValue("All Statuses");
-        handleFilterAdminBookings();
+    public void loadAdminBookings() {
+        try {
+            LocalDate date = adminDatePicker != null ? adminDatePicker.getValue() : null;
+            String statusStr = adminStatusFilterCombo != null ? adminStatusFilterCombo.getValue() : "Pending";
+            BookingStatus status = "All Statuses".equals(statusStr) ? null : BookingStatus.valueOf(statusStr);
+
+            List<Booking> bookings = bookingService.searchAllBookings(date, null, null, status);
+            adminBookingsTable.setItems(FXCollections.observableArrayList(bookings));
+        } catch (Exception e) {
+            logger.error("Error loading admin bookings: {}", e.getMessage(), e);
+        }
     }
 
-    private void handleAdminApprove(Booking b) {
+    private void handleApproveBooking(Booking b) {
         try {
             bookingService.approveBooking(b.getBookingId());
-            showAlert("Booking ID " + b.getBookingId() + " approved successfully.");
-            handleFilterAdminBookings();
+            loadAdminBookings();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Booking Approved");
+            alert.setHeaderText("Reservation Approved");
+            alert.setContentText("Booking #" + b.getBookingId() + " for " + b.getFacilityName() + " has been approved.");
+            alert.showAndWait();
         } catch (Exception e) {
-            showAlert("Error approving booking: " + e.getMessage());
+            showAlert("Approval failed: " + e.getMessage());
         }
     }
 
-    private void handleAdminReject(Booking b) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/fms/view/booking_reject_dialog.fxml"));
-            Parent root = loader.load();
+    private void handleRejectBooking(Booking b) {
+        TextInputDialog dialog = new TextInputDialog("Scheduling conflict / room reassignment");
+        dialog.setTitle("Reject Booking");
+        dialog.setHeaderText("Provide rejection reason for Booking #" + b.getBookingId());
+        dialog.setContentText("Reason:");
 
-            Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setTitle("Reject Booking #" + b.getBookingId());
-
-            TextArea reasonArea = (TextArea) root.lookup("#rejectionReasonArea");
-            Button btnCancel = (Button) root.lookup(".btn-secondary");
-            Button btnReject = (Button) root.lookup(".btn-danger");
-
-            btnCancel.setOnAction(e -> stage.close());
-            btnReject.setOnAction(e -> {
-                String reason = reasonArea.getText();
-                try {
-                    bookingService.rejectBooking(b.getBookingId(), reason != null ? reason.trim() : "");
-                    stage.close();
-                    showAlert("Booking rejected.");
-                    handleFilterAdminBookings();
-                } catch (Exception ex) {
-                    showAlert("Error rejecting booking: " + ex.getMessage());
-                }
-            });
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/fms/css/slotwise-theme.css").toExternalForm());
-            stage.setScene(scene);
-            stage.showAndWait();
-
-        } catch (IOException e) {
-            logger.error("Failed to open rejection dialog: {}", e.getMessage(), e);
-        }
+        dialog.showAndWait().ifPresent(reason -> {
+            if (reason.trim().isEmpty()) {
+                showAlert("Rejection reason cannot be empty.");
+                return;
+            }
+            try {
+                bookingService.rejectBooking(b.getBookingId(), reason.trim());
+                loadAdminBookings();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Booking Rejected");
+                alert.setHeaderText("Reservation Rejected");
+                alert.setContentText("Booking #" + b.getBookingId() + " was rejected.\nReason: " + reason.trim());
+                alert.showAndWait();
+            } catch (Exception e) {
+                showAlert("Rejection failed: " + e.getMessage());
+            }
+        });
     }
 
     private String getStatusBadgeClass(BookingStatus status) {
-        if (status == null) return "badge-status-completed";
-        switch (status) {
-            case Approved: return "badge-status-approved";
-            case Pending: return "badge-status-pending";
-            case Rejected: return "badge-status-rejected";
-            case Cancelled: return "badge-status-cancelled";
-            case Completed: return "badge-status-completed";
-            default: return "badge-status-completed";
-        }
+        if (status == null) return "badge-status-pending";
+        return switch (status) {
+            case Approved -> "badge-status-approved";
+            case Pending -> "badge-status-pending";
+            case Rejected, Cancelled -> "badge-status-rejected";
+            case Completed -> "badge-status-completed";
+        };
     }
 
-    // Feedback helpers
+    // ---------------------------------------------------------------
+    // Feedback Helpers & Toast Notifications
+    // ---------------------------------------------------------------
+
     private void showAlert(String msg) {
         alertMessageLabel.setText(msg);
         alertBanner.setVisible(true);
         alertBanner.setManaged(true);
     }
 
-    /**
-     * Shows an animated sage-green toast pill at the top-right of the booking view.
-     * Plays a subtle system beep for audio feedback, then auto-dismisses after 2.5 s.
-     * Integrates with Module 7 Notifications Engine pattern (FR-BKG-08).
-     */
+    @FXML
+    private void handleDismissAlert() {
+        alertBanner.setVisible(false);
+        alertBanner.setManaged(false);
+    }
+
     private void showSuccessToast(String message) {
-        // Subtle audio cue
         try { java.awt.Toolkit.getDefaultToolkit().beep(); } catch (Exception ignored) {}
 
-        // Build the toast label
         Label toast = new Label(message);
         toast.getStyleClass().add("toast-success");
         toast.setMaxWidth(500);
-        toast.setWrapText(false);
-        toast.setTranslateY(-60); // start above view
+        toast.setTranslateY(-60);
         toast.setOpacity(0);
 
-        // Overlay in a StackPane anchored top-right
         StackPane overlay = new StackPane(toast);
         StackPane.setAlignment(toast, Pos.TOP_CENTER);
         StackPane.setMargin(toast, new Insets(16, 0, 0, 0));
         overlay.setPickOnBounds(false);
         overlay.setMouseTransparent(true);
 
-        // Grab the root VBox from the scene via alertBanner's scene
-        if (alertBanner.getScene() == null) { showAlert(message); return; }
+        if (alertBanner == null || alertBanner.getScene() == null) {
+            showAlert(message);
+            return;
+        }
         Parent sceneRoot = alertBanner.getScene().getRoot();
-        if (!(sceneRoot instanceof Pane rootPane)) { showAlert(message); return; }
+        if (!(sceneRoot instanceof Pane rootPane)) {
+            showAlert(message);
+            return;
+        }
 
         rootPane.getChildren().add(overlay);
         overlay.prefWidthProperty().bind(rootPane.widthProperty());
         overlay.prefHeightProperty().bind(rootPane.heightProperty());
 
-        // Slide-in + Fade-in in parallel (simultaneous entrance)
         TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), toast);
         slideIn.setFromY(-60);
         slideIn.setToY(0);
@@ -773,11 +876,8 @@ public class BookingController {
         fadeIn.setToValue(1);
 
         javafx.animation.ParallelTransition enter = new javafx.animation.ParallelTransition(slideIn, fadeIn);
-
-        // Hold
         PauseTransition hold = new PauseTransition(Duration.millis(2000));
 
-        // Fade-out
         FadeTransition fadeOut = new FadeTransition(Duration.millis(350), toast);
         fadeOut.setFromValue(1);
         fadeOut.setToValue(0);
@@ -787,12 +887,5 @@ public class BookingController {
         seq.play();
 
         logger.info("Toast shown: {}", message);
-
-    }
-
-    @FXML
-    private void handleDismissAlert() {
-        alertBanner.setVisible(false);
-        alertBanner.setManaged(false);
     }
 }

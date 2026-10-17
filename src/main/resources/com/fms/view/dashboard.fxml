@@ -114,36 +114,49 @@
                 <HBox spacing="16">
 
                     <!-- Stat Card 1: Active Facilities (live count) -->
-                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#handleNavFacilities" style="-fx-cursor: hand;">
                         <HBox alignment="CENTER_LEFT" spacing="8">
                             <Label text="🏢" style="-fx-font-size: 18px;" />
                             <Label text="ACTIVE FACILITIES" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
                         </HBox>
                         <Label fx:id="statFacilitiesCount" text="—" styleClass="stat-count-label-green" />
-                        <Label text="Labs, Halls &amp; Classrooms" styleClass="card-subtitle" />
+                        <Label text="Labs, Halls &amp; Classrooms (Click to view)" styleClass="card-subtitle" />
                     </VBox>
 
                     <!-- Stat Card 2: Today's Bookings (live count) -->
-                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#handleNavBookings" style="-fx-cursor: hand;">
                         <HBox alignment="CENTER_LEFT" spacing="8">
                             <Label text="📅" style="-fx-font-size: 18px;" />
                             <Label text="TODAY'S BOOKINGS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
                         </HBox>
                         <Label fx:id="statBookingsCount" text="—" styleClass="stat-count-label" />
-                        <Label text="Active slots reserved today" styleClass="card-subtitle" />
+                        <Label text="Active slots reserved today (Click to view)" styleClass="card-subtitle" />
                     </VBox>
 
                     <!-- Stat Card 3: Pending Approvals (live count) -->
-                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#handleNavBookings" style="-fx-cursor: hand;">
                         <HBox alignment="CENTER_LEFT" spacing="8">
                             <Label text="⏳" style="-fx-font-size: 18px;" />
                             <Label text="PENDING APPROVALS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
                         </HBox>
                         <Label fx:id="statPendingCount" text="—" styleClass="stat-count-label-amber" />
-                        <Label text="Requests awaiting review" styleClass="card-subtitle" />
+                        <Label text="Requests awaiting review (Click to view)" styleClass="card-subtitle" />
                     </VBox>
 
                 </HBox>
+
+                <!-- Quick Actions Shortcuts Card -->
+                <VBox styleClass="card" spacing="12">
+                    <Label text="QUICK ACTIONS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                    <HBox spacing="12">
+                        <Button text="📅  Reserve a Facility Slot" styleClass="btn-primary" onAction="#handleNavBookings" />
+                        <Button text="🏢  Browse All Facilities" styleClass="btn-secondary" onAction="#handleNavFacilities" />
+                        <Button text="📦  Equipment Directory" styleClass="btn-secondary" onAction="#handleNavEquipment" />
+                    </HBox>
+                </VBox>
 
             </VBox>
         </ScrollPane>
