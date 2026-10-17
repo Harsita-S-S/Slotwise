@@ -148,10 +148,14 @@
 
 .btn-primary:hover {
     -fx-background-color: #C4684B;
+    -fx-translate-y: -1;
+    -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.35), 8, 0.0, 0, 3);
 }
 
 .btn-primary:pressed {
     -fx-background-color: #B05C42;
+    -fx-translate-y: 1;
+    -fx-effect: none;
 }
 
 /* Secondary button (outlined) */
@@ -170,6 +174,12 @@
 
 .btn-secondary:hover {
     -fx-background-color: rgba(217, 119, 87, 0.08);
+    -fx-border-color: #C4684B;
+    -fx-translate-y: -1;
+}
+
+.btn-secondary:pressed {
+    -fx-translate-y: 1;
 }
 
 /* Danger button (for destructive actions) */
@@ -293,12 +303,18 @@
 
 .card {
     -fx-background-color: #FFFFFF;
-    -fx-background-radius: 6;
+    -fx-background-radius: 8;
     -fx-border-color: #E5DDD0;
-    -fx-border-radius: 6;
+    -fx-border-radius: 8;
     -fx-border-width: 1;
     -fx-padding: 20;
     -fx-effect: dropshadow(gaussian, rgba(74, 62, 61, 0.06), 10, 0.0, 0, 2);
+}
+
+.card:hover {
+    -fx-translate-y: -2;
+    -fx-border-color: #C8BFB3;
+    -fx-effect: dropshadow(gaussian, rgba(74, 62, 61, 0.12), 16, 0.0, 0, 6);
 }
 
 .card-title {
@@ -613,8 +629,9 @@
 }
 
 .facility-card:hover {
+    -fx-translate-y: -3;
     -fx-border-color: #D97757;
-    -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.15), 16, 0.0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(74, 62, 61, 0.14), 18, 0.0, 0, 8);
 }
 
 /* Dual View Toggle Buttons */
@@ -830,5 +847,155 @@
     -fx-font-size: 13px;
     -fx-text-fill: #4A3E3D;
     -fx-border-color: transparent;
+}
+
+/* ================================================================
+ * VISUAL TIME-SLOT MATRIX STYLES (Module 5 - FR-BKG-02)
+ * ================================================================ */
+
+.slot-btn {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 4;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-alignment: CENTER;
+    -fx-cursor: hand;
+    -fx-min-width: 64px;
+    -fx-pref-width: 72px;
+}
+
+/* FREE SLOT */
+.slot-free {
+    -fx-background-color: rgba(107, 143, 113, 0.15);
+    -fx-border-color: rgba(107, 143, 113, 0.40);
+    -fx-text-fill: #3D6844;
+}
+
+.slot-free:hover {
+    -fx-background-color: rgba(107, 143, 113, 0.28);
+    -fx-border-color: #6B8F71;
+    -fx-translate-y: -1;
+}
+
+/* BOOKED SLOT */
+.slot-booked {
+    -fx-background-color: rgba(161, 82, 82, 0.14);
+    -fx-border-color: rgba(161, 82, 82, 0.35);
+    -fx-text-fill: #993D3D;
+    -fx-cursor: default;
+}
+
+/* PENDING APPROVAL SLOT */
+.slot-pending {
+    -fx-background-color: rgba(201, 168, 76, 0.18);
+    -fx-border-color: rgba(201, 168, 76, 0.45);
+    -fx-text-fill: #94711E;
+    -fx-cursor: default;
+}
+
+/* MAINTENANCE SLOT */
+.slot-maintenance {
+    -fx-background-color: rgba(181, 107, 74, 0.18);
+    -fx-border-color: rgba(181, 107, 74, 0.45);
+    -fx-text-fill: #994825;
+    -fx-cursor: default;
+}
+
+/* PAST SLOT */
+.slot-past {
+    -fx-background-color: rgba(122, 107, 102, 0.12);
+    -fx-border-color: rgba(122, 107, 102, 0.22);
+    -fx-text-fill: #998C87;
+    -fx-cursor: default;
+}
+
+/* SELECTED SLOT (ACTIVE USER SELECTION) */
+.slot-selected {
+    -fx-background-color: #D97757;
+    -fx-border-color: #C4684B;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.40), 8, 0.0, 0, 2);
+    -fx-translate-y: -2;
+}
+
+/* BOOKING STATUS PILL BADGES */
+.badge-status-approved {
+    -fx-background-color: rgba(107, 143, 113, 0.18);
+    -fx-text-fill: #4e7354;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-status-pending {
+    -fx-background-color: rgba(201, 168, 76, 0.20);
+    -fx-text-fill: #997825;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-status-rejected {
+    -fx-background-color: rgba(161, 82, 82, 0.18);
+    -fx-text-fill: #A15252;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-status-cancelled {
+    -fx-background-color: rgba(122, 107, 102, 0.18);
+    -fx-text-fill: #7A6B66;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-status-completed {
+    -fx-background-color: rgba(94, 137, 168, 0.18);
+    -fx-text-fill: #3E6B87;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* ----------------------------------------------------------------
+ * TOAST NOTIFICATION
+ * ---------------------------------------------------------------- */
+
+.toast-success {
+    -fx-background-color: linear-gradient(to right, #6B8F71, #5a7d60);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24;
+    -fx-background-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(107, 143, 113, 0.55), 14, 0, 0, 4);
+}
+
+/* Stat counters in Dashboard overview cards */
+.stat-count-label {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3E3D;
+}
+
+.stat-count-label-green {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6B8F71;
+}
+
+.stat-count-label-amber {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #C9A84C;
 }
 

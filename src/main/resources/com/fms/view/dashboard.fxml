@@ -110,34 +110,40 @@
                     </HBox>
                 </VBox>
 
-                <!-- Quick Stats Cards Row -->
+                <!-- Quick Stats Cards Row — live data injected by DashboardController -->
                 <HBox spacing="16">
 
-                    <!-- Stat Card 1: Facilities -->
-                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
-                        <Label text="FACILITIES" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
-                        <Label text="6 Active" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                        <Label text="Labs, Halls, &amp; Classrooms" styleClass="card-subtitle" />
+                    <!-- Stat Card 1: Active Facilities (live count) -->
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="🏢" style="-fx-font-size: 18px;" />
+                            <Label text="ACTIVE FACILITIES" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        </HBox>
+                        <Label fx:id="statFacilitiesCount" text="—" styleClass="stat-count-label-green" />
+                        <Label text="Labs, Halls &amp; Classrooms" styleClass="card-subtitle" />
                     </VBox>
 
-                    <!-- Stat Card 2: Slots -->
-                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
-                        <Label text="TIME SLOTS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
-                        <Label text="10 Slots" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                        <Label text="08:00 AM – 06:00 PM Daily" styleClass="card-subtitle" />
+                    <!-- Stat Card 2: Today's Bookings (live count) -->
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="📅" style="-fx-font-size: 18px;" />
+                            <Label text="TODAY'S BOOKINGS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        </HBox>
+                        <Label fx:id="statBookingsCount" text="—" styleClass="stat-count-label" />
+                        <Label text="Active slots reserved today" styleClass="card-subtitle" />
                     </VBox>
 
-                    <!-- Stat Card 3: Security & Session -->
-                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
-                        <Label text="SECURITY" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
-                        <Label text="Protected" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #6B8F71;" />
-                        <Label text="BCrypt Hash &amp; Role-based RBAC" styleClass="card-subtitle" />
+                    <!-- Stat Card 3: Pending Approvals (live count) -->
+                    <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="⏳" style="-fx-font-size: 18px;" />
+                            <Label text="PENDING APPROVALS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        </HBox>
+                        <Label fx:id="statPendingCount" text="—" styleClass="stat-count-label-amber" />
+                        <Label text="Requests awaiting review" styleClass="card-subtitle" />
                     </VBox>
 
                 </HBox>
-
-
-
 
             </VBox>
         </ScrollPane>

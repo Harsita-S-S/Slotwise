@@ -43,36 +43,37 @@
          FILTER & SEARCH BAR CARD (FR-FAC-04)
          ============================================================ -->
     <VBox styleClass="card" spacing="12">
+        <!-- Row 1: Full-width search bar -->
         <HBox alignment="CENTER_LEFT" spacing="12">
+            <TextField fx:id="searchField" promptText="🔍  Search by facility name or building..."
+                       styleClass="text-field" HBox.hgrow="ALWAYS" />
+        </HBox>
 
-            <!-- Search input -->
-            <TextField fx:id="searchField" promptText="🔍  Search by name or building..."
-                       styleClass="text-field" prefWidth="260" HBox.hgrow="ALWAYS" />
-
+        <!-- Row 2: Filter dropdowns and inputs with comfortable breathing room -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
             <!-- Type Filter -->
             <ComboBox fx:id="typeFilterCombo" promptText="All Types"
-                      prefWidth="140" styleClass="combo-box" />
+                      prefWidth="135" minWidth="110" styleClass="combo-box" />
 
             <!-- Building Filter -->
             <ComboBox fx:id="buildingFilterCombo" promptText="All Buildings"
-                      prefWidth="160" styleClass="combo-box" />
+                      prefWidth="155" minWidth="130" styleClass="combo-box" />
 
             <!-- Min Capacity -->
             <TextField fx:id="capacityFilterField" promptText="Min Seats"
-                       prefWidth="100" styleClass="text-field" />
+                       prefWidth="105" minWidth="85" styleClass="text-field" />
 
             <!-- Amenity Keyword -->
-            <TextField fx:id="amenityFilterField" promptText="Amenity (e.g. AC)"
-                       prefWidth="130" styleClass="text-field" />
+            <TextField fx:id="amenityFilterField" promptText="Amenity (e.g. AC, Projector)"
+                       prefWidth="160" minWidth="120" styleClass="text-field" HBox.hgrow="ALWAYS" />
 
             <!-- Status Filter -->
             <ComboBox fx:id="statusFilterCombo" promptText="All Statuses"
-                      prefWidth="140" styleClass="combo-box" />
+                      prefWidth="135" minWidth="110" styleClass="combo-box" />
 
             <!-- Clear/Reset Button -->
-            <Button fx:id="resetFiltersButton" text="Reset"
+            <Button fx:id="resetFiltersButton" text="Reset" minWidth="-Infinity"
                     styleClass="btn-secondary" onAction="#handleResetFilters" />
-
         </HBox>
     </VBox>
 
@@ -112,15 +113,15 @@
         <TableView fx:id="facilityTable" visible="false" managed="false"
                    styleClass="table-view" prefHeight="450">
             <columns>
-                <TableColumn fx:id="colName" text="Facility Name" prefWidth="180" />
-                <TableColumn fx:id="colType" text="Type" prefWidth="100" />
-                <TableColumn fx:id="colBuilding" text="Building" prefWidth="130" />
-                <TableColumn fx:id="colFloor" text="Floor" prefWidth="60" />
-                <TableColumn fx:id="colCapacity" text="Capacity" prefWidth="80" />
-                <TableColumn fx:id="colAmenities" text="Amenities" prefWidth="200" />
-                <TableColumn fx:id="colApproval" text="Approval" prefWidth="100" />
-                <TableColumn fx:id="colStatus" text="Status" prefWidth="110" />
-                <TableColumn fx:id="colActions" text="Actions" prefWidth="140" />
+                <TableColumn fx:id="colName" text="Facility Name" prefWidth="180" minWidth="140" />
+                <TableColumn fx:id="colType" text="Type" prefWidth="100" minWidth="80" />
+                <TableColumn fx:id="colBuilding" text="Building" prefWidth="130" minWidth="110" />
+                <TableColumn fx:id="colFloor" text="Floor" prefWidth="65" minWidth="60" />
+                <TableColumn fx:id="colCapacity" text="Capacity" prefWidth="95" minWidth="90" />
+                <TableColumn fx:id="colAmenities" text="Amenities" prefWidth="200" minWidth="150" />
+                <TableColumn fx:id="colApproval" text="Approval" prefWidth="100" minWidth="90" />
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="110" minWidth="90" />
+                <TableColumn fx:id="colActions" text="Actions" prefWidth="140" minWidth="120" />
             </columns>
         </TableView>
 

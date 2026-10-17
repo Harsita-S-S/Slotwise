@@ -50,3 +50,6 @@ $RECYCLE.BIN/
 # Crash and dump logs
 hs_err_pid*
 replay_pid*
+
+# Developer notes (kept locally, not committed)
+devlog.txt

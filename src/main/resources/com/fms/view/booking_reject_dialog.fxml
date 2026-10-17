@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      spacing="16" styleClass="card" prefWidth="420"
+      style="-fx-background-color: #FFFFFF; -fx-padding: 24;">
+
+    <VBox spacing="4">
+        <Label text="Reject Booking Request" styleClass="card-title" style="-fx-text-fill: #A15252;" />
+        <Label text="Specify an optional reason to explain why this request was not approved."
+               styleClass="card-subtitle" />
+    </VBox>
+
+    <Separator />
+
+    <VBox spacing="6">
+        <Label text="REJECTION REASON (OPTIONAL)" styleClass="field-label" />
+        <TextArea fx:id="rejectionReasonArea" promptText="e.g. Facility reserved for official department audit, maintenance conflict, etc."
+                  prefRowCount="3" wrapText="true" />
+    </VBox>
+
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Cancel" styleClass="btn-secondary" onAction="#handleCancelReject" />
+        <Button text="Reject Request" styleClass="btn-danger" onAction="#handleConfirmReject" />
+    </HBox>
+
+</VBox>

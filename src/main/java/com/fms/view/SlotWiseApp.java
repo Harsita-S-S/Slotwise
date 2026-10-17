@@ -102,9 +102,9 @@ public class SlotWiseApp extends Application {
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
 
-            // Retain window dimensions if already resized, otherwise default to 1100x720
-            double currentWidth = primaryStage.getWidth() > 100 ? primaryStage.getWidth() : 1100;
-            double currentHeight = primaryStage.getHeight() > 100 ? primaryStage.getHeight() : 720;
+            // Retain window dimensions if already resized, otherwise default to 1200x750
+            double currentWidth = primaryStage.getWidth() > 100 ? primaryStage.getWidth() : 1200;
+            double currentHeight = primaryStage.getHeight() > 100 ? primaryStage.getHeight() : 750;
 
             Scene scene = new Scene(root, currentWidth, currentHeight);
             applyStylesheet(scene);

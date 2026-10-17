@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     purpose VARCHAR(255) NOT NULL,
     attendees INT NOT NULL,
     status ENUM('Pending', 'Approved', 'Rejected', 'Cancelled', 'Completed') NOT NULL DEFAULT 'Approved',
+    rejection_reason VARCHAR(255) NULL,
     active_flag TINYINT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_booking_facility FOREIGN KEY (facility_id) 

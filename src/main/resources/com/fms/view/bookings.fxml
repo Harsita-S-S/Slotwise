@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.fms.controller.BookingController"
+      spacing="20" style="-fx-padding: 24;">
+
+    <!-- ============================================================
+         HEADER SECTION
+         ============================================================ -->
+    <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Availability Search &amp; Booking" styleClass="card-title" style="-fx-font-size: 22px;" />
+            <Label text="Check visual slot availability, reserve facilities up to 30 days ahead, and track requests."
+                   styleClass="card-subtitle" />
+        </VBox>
+
+        <!-- View Mode Navigation Tabs -->
+        <HBox spacing="8" alignment="CENTER_RIGHT">
+            <Button fx:id="btnTabAvailability" text="📅 Book Facilities"
+                    styleClass="view-toggle-btn-active" onAction="#handleSwitchToAvailability" />
+            <Button fx:id="btnTabMyBookings" text="📋 My Bookings"
+                    styleClass="view-toggle-btn" onAction="#handleSwitchToMyBookings" />
+            <Button fx:id="btnTabAdminApprovals" text="🛡️ Approvals Console"
+                    styleClass="view-toggle-btn" onAction="#handleSwitchToAdminApprovals" />
+        </HBox>
+    </HBox>
+
+    <!-- Status Banner / Feedback Alert -->
+    <HBox fx:id="alertBanner" visible="false" managed="false" alignment="CENTER_LEFT" spacing="12"
+          style="-fx-background-color: rgba(217, 119, 87, 0.12); -fx-border-color: #D97757; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 16;">
+        <Label fx:id="alertMessageLabel" text="Alert message" style="-fx-text-fill: #4A3E3D; -fx-font-weight: bold;" HBox.hgrow="ALWAYS" />
+        <Button text="✕" style="-fx-background-color: transparent; -fx-text-fill: #7A6B66; -fx-cursor: hand;" onAction="#handleDismissAlert" />
+    </HBox>
+
+    <!-- ============================================================
+         VIEW 1: AVAILABILITY & VISUAL SLOT MATRIX (FR-BKG-01, FR-BKG-02)
+         ============================================================ -->
+    <VBox fx:id="availabilityPane" spacing="16" VBox.vgrow="ALWAYS">
+
+        <!-- Search Toolbar Card -->
+        <VBox styleClass="card" spacing="14">
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <!-- Date Picker (BR-02) -->
+                <VBox spacing="4">
+                    <Label text="BOOKING DATE" styleClass="field-label" />
+                    <DatePicker fx:id="datePicker" prefWidth="170" />
+                </VBox>
+
+                <!-- Facility Type Filter -->
+                <VBox spacing="4">
+                    <Label text="FACILITY TYPE" styleClass="field-label" />
+                    <ComboBox fx:id="typeFilterCombo" prefWidth="160" />
+                </VBox>
+
+                <!-- Capacity Filter -->
+                <VBox spacing="4">
+                    <Label text="MIN CAPACITY" styleClass="field-label" />
+                    <TextField fx:id="minCapacityField" promptText="e.g. 50" prefWidth="110" />
+                </VBox>
+
+                <!-- Amenity Filter -->
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="AMENITIES" styleClass="field-label" />
+                    <TextField fx:id="amenityFilterField" promptText="Filter by Wi-Fi, Projector, AC..." />
+                </VBox>
+
+                <VBox spacing="4" alignment="BOTTOM_LEFT">
+                    <Button text="Search Slots" styleClass="btn-primary" onAction="#handleSearchSlots" />
+                </VBox>
+            </HBox>
+
+            <Separator />
+
+            <!-- Color Legend Row -->
+            <HBox spacing="20" alignment="CENTER_LEFT">
+                <Label text="LEGEND:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #3D6844; -fx-font-size: 14px;" />
+                    <Label text="Free (Available)" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #993D3D; -fx-font-size: 14px;" />
+                    <Label text="Booked" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #94711E; -fx-font-size: 14px;" />
+                    <Label text="Pending Approval" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #994825; -fx-font-size: 14px;" />
+                    <Label text="Under Maintenance" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #998C87; -fx-font-size: 14px;" />
+                    <Label text="Past Slot" style="-fx-font-size: 11px; -fx-text-fill: #4A3E3D;" />
+                </HBox>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="■" style="-fx-text-fill: #D97757; -fx-font-size: 14px;" />
+                    <Label text="Your Selected Slots (Max 3)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;" />
+                </HBox>
+            </HBox>
+        </VBox>
+
+        <!-- Dynamic Visual Slot Grid Container -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <VBox fx:id="matrixContainer" spacing="14" style="-fx-padding: 4;">
+                <!-- Room Slot Rows rendered dynamically by controller -->
+            </VBox>
+        </ScrollPane>
+
+        <!-- Persistent Selection Floating Bar (BR-03) -->
+        <HBox fx:id="selectionBar" visible="false" managed="false" alignment="CENTER_LEFT" spacing="16"
+              style="-fx-background-color: #FFFFFF; -fx-border-color: #D97757; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14 20; -fx-effect: dropshadow(gaussian, rgba(217, 119, 87, 0.25), 14, 0.0, 0, 4);">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label fx:id="selectionFacilityLabel" text="Selected Room: None"
+                       style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #4A3E3D;" />
+                <Label fx:id="selectionSlotsLabel" text="Select up to 3 slots for the same room (BR-03)"
+                       style="-fx-font-size: 12px; -fx-text-fill: #7A6B66;" />
+            </VBox>
+            <Button text="Clear Selection" styleClass="btn-secondary" onAction="#handleClearSelection" />
+            <Button fx:id="btnProceedBooking" text="Proceed to Reserve →" styleClass="btn-primary" onAction="#handleOpenBookingModal" />
+        </HBox>
+
+    </VBox>
+
+    <!-- ============================================================
+         VIEW 2: MY BOOKINGS (FR-BKG-08)
+         ============================================================ -->
+    <VBox fx:id="myBookingsPane" visible="false" managed="false" spacing="14" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="My Reserved Facilities" styleClass="card-title" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="Refresh List" styleClass="btn-secondary" onAction="#handleRefreshMyBookings" />
+        </HBox>
+
+        <TableView fx:id="myBookingsTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colMyFacility" text="Facility" prefWidth="180" />
+                <TableColumn fx:id="colMyBuilding" text="Building" prefWidth="140" />
+                <TableColumn fx:id="colMyDate" text="Date" prefWidth="110" />
+                <TableColumn fx:id="colMySlot" text="Time Slot" prefWidth="120" />
+                <TableColumn fx:id="colMyAttendees" text="Attendees" prefWidth="80" />
+                <TableColumn fx:id="colMyPurpose" text="Purpose" prefWidth="200" />
+                <TableColumn fx:id="colMyStatus" text="Status" prefWidth="120" />
+                <TableColumn fx:id="colMyActions" text="Actions" prefWidth="180" />
+            </columns>
+        </TableView>
+    </VBox>
+
+    <!-- ============================================================
+         VIEW 3: ADMIN APPROVALS & ALL BOOKINGS (FR-BKG-07, FR-BKG-09)
+         ============================================================ -->
+    <VBox fx:id="adminApprovalsPane" visible="false" managed="false" spacing="14" VBox.vgrow="ALWAYS">
+        <VBox styleClass="card" spacing="12">
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <Label text="FILTER DATE" styleClass="field-label" />
+                    <DatePicker fx:id="adminDatePicker" prefWidth="160" />
+                </VBox>
+
+                <VBox spacing="4">
+                    <Label text="STATUS" styleClass="field-label" />
+                    <ComboBox fx:id="adminStatusFilterCombo" prefWidth="150" />
+                </VBox>
+
+                <VBox spacing="4" alignment="BOTTOM_LEFT">
+                    <Button text="Filter Bookings" styleClass="btn-primary" onAction="#handleFilterAdminBookings" />
+                </VBox>
+
+                <VBox spacing="4" alignment="BOTTOM_LEFT">
+                    <Button text="Reset Filters" styleClass="btn-secondary" onAction="#handleResetAdminFilters" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <TableView fx:id="adminBookingsTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colAdminId" text="ID" prefWidth="60" />
+                <TableColumn fx:id="colAdminUser" text="Requested By" prefWidth="140" />
+                <TableColumn fx:id="colAdminFacility" text="Facility" prefWidth="180" />
+                <TableColumn fx:id="colAdminDate" text="Date" prefWidth="110" />
+                <TableColumn fx:id="colAdminSlot" text="Slot" prefWidth="120" />
+                <TableColumn fx:id="colAdminAttendees" text="Count" prefWidth="70" />
+                <TableColumn fx:id="colAdminPurpose" text="Purpose" prefWidth="180" />
+                <TableColumn fx:id="colAdminStatus" text="Status" prefWidth="120" />
+                <TableColumn fx:id="colAdminActions" text="Decision" prefWidth="170" />
+            </columns>
+        </TableView>
+    </VBox>
+
+</VBox>

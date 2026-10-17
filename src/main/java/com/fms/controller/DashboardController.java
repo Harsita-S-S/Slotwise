@@ -1,5 +1,7 @@
 package com.fms.controller;
 
+import com.fms.dao.BookingDAO;
+import com.fms.dao.FacilityDAO;
 import com.fms.model.Role;
 import com.fms.service.SessionManager;
 import com.fms.view.SlotWiseApp;
@@ -45,6 +47,14 @@ public class DashboardController {
     @FXML private Label welcomeLabel;
     @FXML private Label roleInfoLabel;
 
+    // Live stat card labels (populated from DB)
+    @FXML private Label statFacilitiesCount;
+    @FXML private Label statBookingsCount;
+    @FXML private Label statPendingCount;
+
+    private final FacilityDAO facilityDAO = new FacilityDAO();
+    private final BookingDAO bookingDAO = new BookingDAO();
+
     private java.util.List<javafx.scene.Node> defaultDashboardNodes;
 
     /**
@@ -73,6 +83,9 @@ public class DashboardController {
 
         // Show role-specific info on the dashboard
         showRoleDashboardInfo(session.getCurrentRole());
+
+        // Populate live stat counters
+        refreshDashboardStats();
     }
 
     /**
@@ -132,7 +145,30 @@ public class DashboardController {
         if (defaultDashboardNodes != null) {
             contentArea.getChildren().setAll(defaultDashboardNodes);
         }
+        // Refresh live counts every time the user returns to Dashboard
+        refreshDashboardStats();
         logger.info("Navigated to: Dashboard");
+    }
+
+    /**
+     * Loads live counts from BookingDAO and FacilityDAO and sets them on the
+     * stat card labels on the Home Dashboard.
+     */
+    private void refreshDashboardStats() {
+        try {
+            int facilities = facilityDAO.findAllActive().size();
+            int todayBookings = bookingDAO.countTodayActiveBookings();
+            int pending = bookingDAO.countPendingApprovals();
+
+            if (statFacilitiesCount != null) statFacilitiesCount.setText(String.valueOf(facilities));
+            if (statBookingsCount   != null) statBookingsCount.setText(String.valueOf(todayBookings));
+            if (statPendingCount    != null) statPendingCount.setText(String.valueOf(pending));
+
+            logger.debug("Dashboard stats refreshed — facilities={}, todayBookings={}, pending={}",
+                    facilities, todayBookings, pending);
+        } catch (Exception e) {
+            logger.error("Failed to refresh dashboard stats: {}", e.getMessage());
+        }
     }
 
     @FXML
@@ -177,7 +213,7 @@ public class DashboardController {
     @FXML
     private void handleNavBookings() {
         setActiveNavButton(navBookings);
-        showEmptyView("Bookings", "This module has not been implemented yet.");
+        loadView("/com/fms/view/bookings.fxml");
         logger.info("Navigated to: Bookings");
     }
 

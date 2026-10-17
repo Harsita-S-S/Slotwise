@@ -28,6 +28,7 @@ public class DatabaseInitializer {
         logger.info("Starting database schema and seed data initialization...");
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             executeSchemaScript(conn);
+            migrateBookingsTable(conn);
             seedTimeSlots(conn);
             seedUsersAndStaff(conn);
             seedFacilities(conn);
@@ -65,6 +66,15 @@ public class DatabaseInitializer {
                 }
             }
             logger.info("Executed schema.sql successfully.");
+        }
+    }
+
+    private static void migrateBookingsTable(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("ALTER TABLE bookings ADD COLUMN rejection_reason VARCHAR(255) NULL");
+            logger.info("Added rejection_reason column to bookings table.");
+        } catch (SQLException e) {
+            // Column already exists or table already updated - safe to ignore
         }
     }
 

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      spacing="18" styleClass="card" prefWidth="480"
+      style="-fx-background-color: #FFFFFF; -fx-padding: 28;">
+
+    <!-- Dialog Header -->
+    <VBox spacing="4">
+        <Label text="Confirm Facility Reservation" styleClass="card-title" style="-fx-font-size: 18px;" />
+        <Label text="Review your selected time slots and provide reservation details." styleClass="card-subtitle" />
+    </VBox>
+
+    <Separator />
+
+    <!-- Error message banner -->
+    <Label fx:id="dialogErrorLabel" text="" styleClass="error-label" visible="false" managed="false" wrapText="true" />
+
+    <!-- Summary Box -->
+    <VBox spacing="8" style="-fx-background-color: #F8F5F0; -fx-border-color: #E5DDD0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14;">
+        <HBox spacing="10">
+            <Label text="Facility:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
+            <Label fx:id="dlgFacilityLabel" text="Main Auditorium" style="-fx-text-fill: #3E3232;" />
+        </HBox>
+        <HBox spacing="10">
+            <Label text="Date:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
+            <Label fx:id="dlgDateLabel" text="2026-10-18" style="-fx-text-fill: #3E3232;" />
+        </HBox>
+        <HBox spacing="10">
+            <Label text="Selected Slots:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
+            <Label fx:id="dlgSlotsLabel" text="Slot 2, Slot 3 (09:00 - 11:00)" style="-fx-text-fill: #D97757; -fx-font-weight: bold;" />
+        </HBox>
+        <HBox spacing="10">
+            <Label text="Room Capacity:" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D; -fx-min-width: 90;" />
+            <Label fx:id="dlgCapacityLabel" text="Up to 50 persons" style="-fx-text-fill: #7A6B66;" />
+        </HBox>
+    </VBox>
+
+    <!-- Form Inputs -->
+    <VBox spacing="14">
+        <VBox spacing="4">
+            <Label text="BOOKING PURPOSE *" styleClass="field-label" />
+            <TextField fx:id="dlgPurposeField" promptText="e.g. Java Programming Workshop, Guest Lecture, Club Meet" />
+        </VBox>
+
+        <VBox spacing="4">
+            <Label text="EXPECTED ATTENDEES COUNT *" styleClass="field-label" />
+            <TextField fx:id="dlgAttendeesField" promptText="Must be between 1 and room capacity" />
+        </VBox>
+
+        <!-- Approval Notice -->
+        <HBox fx:id="dlgApprovalNotice" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
+              style="-fx-background-color: rgba(201, 168, 76, 0.15); -fx-border-color: #C9A84C; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;">
+            <Label text="ℹ This facility requires Admin approval. Your booking will start as 'Pending'."
+                   style="-fx-font-size: 11px; -fx-text-fill: #856404;" wrapText="true" />
+        </HBox>
+    </VBox>
+
+    <Separator />
+
+    <!-- Action Buttons -->
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Cancel" styleClass="btn-secondary" onAction="#handleCancelDialog" />
+        <Button text="Confirm Reservation" styleClass="btn-primary" onAction="#handleConfirmBooking" />
+    </HBox>
+
+</VBox>
