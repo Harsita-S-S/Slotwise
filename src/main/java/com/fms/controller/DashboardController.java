@@ -157,15 +157,34 @@ public class DashboardController {
         }
     }
 
+    private void showEmptyView(String title, String subtitle) {
+        javafx.scene.layout.VBox emptyBox = new javafx.scene.layout.VBox(12);
+        emptyBox.setAlignment(javafx.geometry.Pos.CENTER);
+        emptyBox.setPadding(new javafx.geometry.Insets(80, 24, 80, 24));
+        emptyBox.getStyleClass().add("card");
+        emptyBox.setMaxWidth(Double.MAX_VALUE);
+
+        javafx.scene.control.Label titleLabel = new javafx.scene.control.Label(title);
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;");
+
+        javafx.scene.control.Label subtitleLabel = new javafx.scene.control.Label(subtitle);
+        subtitleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7A6B66;");
+
+        emptyBox.getChildren().addAll(titleLabel, subtitleLabel);
+        contentArea.getChildren().setAll(emptyBox);
+    }
+
     @FXML
     private void handleNavBookings() {
         setActiveNavButton(navBookings);
+        showEmptyView("Bookings", "This module has not been implemented yet.");
         logger.info("Navigated to: Bookings");
     }
 
     @FXML
     private void handleNavMaintenance() {
         setActiveNavButton(navMaintenance);
+        showEmptyView("Maintenance", "This module has not been implemented yet.");
         logger.info("Navigated to: Maintenance");
     }
 
@@ -187,6 +206,7 @@ public class DashboardController {
     private void handleNavUsers() {
         SessionManager.getInstance().requireRole(Role.Admin);
         setActiveNavButton(navUsers);
+        showEmptyView("User Management", "This module has not been implemented yet.");
         logger.info("Navigated to: User Management");
     }
 
@@ -194,6 +214,7 @@ public class DashboardController {
     private void handleNavReports() {
         SessionManager.getInstance().requireRole(Role.Admin);
         setActiveNavButton(navReports);
+        showEmptyView("Reports & Analytics", "This module has not been implemented yet.");
         logger.info("Navigated to: Reports");
     }
 
