@@ -132,21 +132,7 @@ public class SessionManager {
         }
     }
 
-    /**
-     * Enforces that the current user is an Admin (FR-AUTH-05).
-     * Throws AccessDeniedException if not logged in or not an Admin.
-     */
-    public void requireAdmin() {
-        requireRole(Role.Admin);
-    }
 
-    /**
-     * Enforces that the current user has at least Staff privileges (FR-AUTH-05).
-     * Throws AccessDeniedException if not logged in or a regular User.
-     */
-    public void requireStaff() {
-        requireRole(Role.Staff);
-    }
 
     /**
      * Checks if the current user is an Admin.

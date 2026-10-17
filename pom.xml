@@ -112,7 +112,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.fms.Main</mainClass>
+                            <mainClass>com.fms.view.SlotWiseApp</mainClass>
                         </configuration>
                     </execution>
                 </executions>

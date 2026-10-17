@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Equipment View (Module 3, Option A: Dual View - Card Grid with Table Toggle)
+  Controller: com.fms.controller.EquipmentController
+-->
+<VBox spacing="18" style="-fx-padding: 24;"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.fms.controller.EquipmentController">
+
+    <!-- ============================================================
+         TOP HEADER & ACTION BAR
+         ============================================================ -->
+    <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="Equipment Management"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Label text="Track institutional assets, condition status, room allocations, and repair logs"
+                   styleClass="card-subtitle" />
+        </VBox>
+
+        <!-- Admin/Staff Add Equipment Button (FR-EQP-01) -->
+        <Button fx:id="addEquipmentButton" text="+ Add Equipment"
+                styleClass="btn-primary" onAction="#handleOpenAddDialog" />
+    </HBox>
+
+    <!-- ============================================================
+         FILTER & SEARCH BAR CARD (FR-EQP-03)
+         ============================================================ -->
+    <VBox styleClass="card" spacing="12">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+
+            <!-- Search input -->
+            <TextField fx:id="searchField" promptText="🔍  Search by name or serial number..."
+                       styleClass="text-field" prefWidth="250" HBox.hgrow="ALWAYS" />
+
+            <!-- Facility Filter (FR-EQP-03) -->
+            <ComboBox fx:id="facilityFilterCombo" promptText="All Facilities"
+                      prefWidth="190" styleClass="combo-box" />
+
+            <!-- Category Filter -->
+            <ComboBox fx:id="categoryFilterCombo" promptText="All Categories"
+                      prefWidth="160" styleClass="combo-box" />
+
+            <!-- Condition Status Filter (FR-EQP-02) -->
+            <ComboBox fx:id="conditionFilterCombo" promptText="All Conditions"
+                      prefWidth="150" styleClass="combo-box" />
+
+            <!-- Clear/Reset Button -->
+            <Button fx:id="resetFiltersButton" text="Reset"
+                    styleClass="btn-secondary" onAction="#handleResetFilters" />
+
+        </HBox>
+    </VBox>
+
+    <!-- ============================================================
+         RESULTS SUMMARY & VIEW TOGGLE (Cards vs Table)
+         ============================================================ -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label fx:id="resultCountLabel" text="Showing 0 equipment items"
+               style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7A6B66;" />
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <!-- Dual View Toggle -->
+        <HBox spacing="0">
+            <Button fx:id="cardViewBtn" text="⊞  Cards"
+                    styleClass="view-toggle-btn-active" onAction="#handleShowCardView"
+                    style="-fx-background-radius: 6 0 0 6; -fx-border-radius: 6 0 0 6;" />
+            <Button fx:id="tableViewBtn" text="☰  Table"
+                    styleClass="view-toggle-btn" onAction="#handleShowTableView"
+                    style="-fx-background-radius: 0 6 6 0; -fx-border-radius: 0 6 6 0;" />
+        </HBox>
+    </HBox>
+
+    <!-- ============================================================
+         CONTENT AREA: STACK OF CARDS FLOWPANE AND TABLEVIEW
+         ============================================================ -->
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <!-- 1. Card Grid View -->
+        <ScrollPane fx:id="cardScrollPane" fitToWidth="true"
+                    style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <FlowPane fx:id="cardContainer" hgap="16" vgap="16"
+                      prefWrapLength="800" style="-fx-padding: 4 0 20 0;" />
+        </ScrollPane>
+
+        <!-- 2. Table View -->
+        <TableView fx:id="equipmentTable" visible="false" managed="false"
+                   styleClass="table-view" prefHeight="450">
+            <columns>
+                <TableColumn fx:id="colName" text="Equipment Name" prefWidth="180" />
+                <TableColumn fx:id="colSerial" text="Serial Number" prefWidth="130" />
+                <TableColumn fx:id="colCategory" text="Category" prefWidth="110" />
+                <TableColumn fx:id="colFacility" text="Linked Facility" prefWidth="170" />
+                <TableColumn fx:id="colPurchaseDate" text="Purchased" prefWidth="100" />
+                <TableColumn fx:id="colCondition" text="Condition" prefWidth="110" />
+                <TableColumn fx:id="colActions" text="Actions" prefWidth="200" />
+            </columns>
+        </TableView>
+
+    </StackPane>
+
+</VBox>

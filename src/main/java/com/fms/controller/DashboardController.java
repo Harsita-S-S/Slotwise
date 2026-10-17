@@ -172,12 +172,14 @@ public class DashboardController {
     @FXML
     private void handleNavEquipment() {
         setActiveNavButton(navEquipment);
+        loadView("/com/fms/view/equipment.fxml");
         logger.info("Navigated to: Equipment");
     }
 
     @FXML
     private void handleNavStaff() {
         setActiveNavButton(navStaff);
+        loadView("/com/fms/view/staff.fxml");
         logger.info("Navigated to: Staff");
     }
 

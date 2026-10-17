@@ -31,6 +31,15 @@ public class SlotWiseApp extends Application {
     }
 
     @Override
+    public void init() {
+        try {
+            com.fms.util.DatabaseInitializer.initializeDatabase();
+        } catch (Exception e) {
+            logger.error("Database initialization note: {}", e.getMessage());
+        }
+    }
+
+    @Override
     public void start(Stage stage) {
         this.primaryStage = stage;
         this.primaryStage.setTitle("SlotWise — Facility Management System");
@@ -40,6 +49,11 @@ public class SlotWiseApp extends Application {
         // Show the login screen on startup
         showLogin();
         this.primaryStage.show();
+
+        // Ensure window pops to the front and grabs focus (prevents opening minimized)
+        this.primaryStage.setIconified(false);
+        this.primaryStage.toFront();
+        this.primaryStage.requestFocus();
     }
 
     /**
@@ -61,6 +75,12 @@ public class SlotWiseApp extends Application {
 
             primaryStage.setScene(scene);
             primaryStage.centerOnScreen();
+
+            // Bring to front and restore if minimized
+            primaryStage.setIconified(false);
+            primaryStage.toFront();
+            primaryStage.requestFocus();
+
             logger.info("Login screen displayed.");
 
         } catch (IOException e) {
@@ -82,11 +102,20 @@ public class SlotWiseApp extends Application {
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
 
-            Scene scene = new Scene(root, 1080, 700);
+            // Retain window dimensions if already resized, otherwise default to 1100x720
+            double currentWidth = primaryStage.getWidth() > 100 ? primaryStage.getWidth() : 1100;
+            double currentHeight = primaryStage.getHeight() > 100 ? primaryStage.getHeight() : 720;
+
+            Scene scene = new Scene(root, currentWidth, currentHeight);
             applyStylesheet(scene);
 
             primaryStage.setScene(scene);
-            primaryStage.centerOnScreen();
+
+            // Bring to front and restore
+            primaryStage.setIconified(false);
+            primaryStage.toFront();
+            primaryStage.requestFocus();
+
             logger.info("Dashboard screen displayed.");
 
         } catch (IOException e) {

@@ -464,6 +464,117 @@
     -fx-font-weight: bold;
 }
 
+/* Equipment Condition Badges (Module 3) */
+.badge-good {
+    -fx-background-color: rgba(107, 143, 113, 0.18);
+    -fx-text-fill: #4e7354;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-needs-repair {
+    -fx-background-color: rgba(201, 168, 76, 0.20);
+    -fx-text-fill: #997825;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-under-repair {
+    -fx-background-color: rgba(217, 119, 87, 0.18);
+    -fx-text-fill: #C4684B;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-retired {
+    -fx-background-color: rgba(122, 107, 102, 0.20);
+    -fx-text-fill: #5E534F;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Staff Trade Specialization Badges (Module 4) */
+.badge-trade-electrician {
+    -fx-background-color: rgba(201, 168, 76, 0.20);
+    -fx-text-fill: #997825;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-trade-plumber {
+    -fx-background-color: rgba(94, 137, 168, 0.18);
+    -fx-text-fill: #3E6B87;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-trade-itsupport {
+    -fx-background-color: rgba(217, 119, 87, 0.18);
+    -fx-text-fill: #C4684B;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-trade-labtech {
+    -fx-background-color: rgba(107, 143, 113, 0.18);
+    -fx-text-fill: #4e7354;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-trade-general {
+    -fx-background-color: rgba(122, 107, 102, 0.18);
+    -fx-text-fill: #7A6B66;
+    -fx-padding: 3 10;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Workload Meter Badges (FR-STF-03) */
+.badge-workload-available {
+    -fx-background-color: rgba(107, 143, 113, 0.18);
+    -fx-text-fill: #4e7354;
+    -fx-padding: 4 12;
+    -fx-background-radius: 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-workload-moderate {
+    -fx-background-color: rgba(201, 168, 76, 0.20);
+    -fx-text-fill: #997825;
+    -fx-padding: 4 12;
+    -fx-background-radius: 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-workload-busy {
+    -fx-background-color: rgba(161, 82, 82, 0.18);
+    -fx-text-fill: #A15252;
+    -fx-padding: 4 12;
+    -fx-background-radius: 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
 .badge-approval {
     -fx-background-color: rgba(217, 119, 87, 0.12);
     -fx-text-fill: #D97757;

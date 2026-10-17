@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Staff Open Tasks Dialog (FR-STF-03)
+-->
+<VBox spacing="16" prefWidth="780" prefHeight="480" styleClass="card"
+      style="-fx-padding: 24; -fx-background-color: #FFFFFF;"
+      xmlns:fx="http://javafx.com/fxml">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="📋" style="-fx-font-size: 20px;" />
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label fx:id="taskDialogTitle" text="Staff Assigned Tasks" styleClass="card-title" />
+            <Label fx:id="taskDialogSubtitle" text="Live queue of active tickets and repair orders"
+                   styleClass="card-subtitle" />
+        </VBox>
+    </HBox>
+
+    <Region prefHeight="1" style="-fx-background-color: #E5DDD0;" />
+
+    <!-- Tasks Table (FR-STF-03) -->
+    <TableView fx:id="tasksTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="colTaskId" text="ID" prefWidth="60" />
+            <TableColumn fx:id="colTaskFacility" text="Facility" prefWidth="130" />
+            <TableColumn fx:id="colTaskEquipment" text="Equipment" prefWidth="130" />
+            <TableColumn fx:id="colTaskDesc" text="Description" prefWidth="210" />
+            <TableColumn fx:id="colTaskPriority" text="Priority" prefWidth="85" />
+            <TableColumn fx:id="colTaskStatus" text="Status" prefWidth="95" />
+        </columns>
+    </TableView>
+
+    <!-- Footer / Close -->
+    <HBox alignment="CENTER_RIGHT">
+        <Button fx:id="closeButton" text="Close" styleClass="btn-secondary" />
+    </HBox>
+
+</VBox>

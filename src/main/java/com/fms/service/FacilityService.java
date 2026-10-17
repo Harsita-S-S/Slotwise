@@ -54,7 +54,7 @@ public class FacilityService {
                                 int floor, int capacity, String amenities,
                                 boolean requiresApproval) {
         // Enforce admin permission
-        SessionManager.getInstance().requireAdmin();
+        SessionManager.getInstance().requireRole(Role.Admin);
 
         // Step 1: Input validation
         validateFacilityInput(name, type, building, floor, capacity);
@@ -94,7 +94,7 @@ public class FacilityService {
      */
     public boolean updateFacility(Facility facility) {
         // Enforce admin permission
-        SessionManager.getInstance().requireAdmin();
+        SessionManager.getInstance().requireRole(Role.Admin);
 
         if (facility == null || facility.getFacilityId() <= 0) {
             throw new InvalidInputException("facilityId", "Invalid facility ID for update.");
@@ -129,7 +129,7 @@ public class FacilityService {
      * @return true if status was updated
      */
     public boolean changeFacilityStatus(int facilityId, FacilityStatus newStatus) {
-        SessionManager.getInstance().requireAdmin();
+        SessionManager.getInstance().requireRole(Role.Admin);
 
         if (newStatus == null) {
             throw new InvalidInputException("status", "Status cannot be null.");
@@ -200,7 +200,7 @@ public class FacilityService {
      * @return DeactivationResult indicating status or warning
      */
     public DeactivationResult deactivateFacility(int facilityId, boolean confirmed) {
-        SessionManager.getInstance().requireAdmin();
+        SessionManager.getInstance().requireRole(Role.Admin);
 
         Optional<Facility> opt = facilityDAO.findById(facilityId);
         if (opt.isEmpty()) {

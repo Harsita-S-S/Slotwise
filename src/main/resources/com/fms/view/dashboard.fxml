@@ -136,30 +136,8 @@
 
                 </HBox>
 
-                <!-- Quick Overview Section Card -->
-                <VBox styleClass="card" spacing="14">
-                    <Label text="Quick Navigation &amp; Module Overview" styleClass="card-title" />
-                    <Label text="Use the left navigation bar to access features permitted for your role."
-                           styleClass="card-subtitle" />
-                    <Separator />
-                    <VBox spacing="10">
-                        <HBox alignment="CENTER_LEFT" spacing="12">
-                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
-                            <Label text="Admin: Full system management, user accounts, role permissions, and audit logs."
-                                   style="-fx-text-fill: #4A3E3D;" />
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" spacing="12">
-                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
-                            <Label text="Staff: Facility scheduling, maintenance tickets, and equipment tracking."
-                                   style="-fx-text-fill: #4A3E3D;" />
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" spacing="12">
-                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
-                            <Label text="User: Browse facilities, view availability, and request slot bookings."
-                                   style="-fx-text-fill: #4A3E3D;" />
-                        </HBox>
-                    </VBox>
-                </VBox>
+
+
 
             </VBox>
         </ScrollPane>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Add/Edit Staff Dialog (FR-STF-01, FR-STF-02)
+-->
+<VBox spacing="16" prefWidth="480" styleClass="card"
+      style="-fx-padding: 24; -fx-background-color: #FFFFFF;"
+      xmlns:fx="http://javafx.com/fxml">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="👥" style="-fx-font-size: 20px;" />
+        <VBox spacing="2">
+            <Label fx:id="dialogTitle" text="Add Staff Record" styleClass="card-title" />
+            <Label text="Link a staff login account to campus trade and contact details" styleClass="card-subtitle" />
+        </VBox>
+    </HBox>
+
+    <Region prefHeight="1" style="-fx-background-color: #E5DDD0;" />
+
+    <!-- Form Fields Grid -->
+    <GridPane hgap="12" vgap="12">
+
+        <!-- Linked User Account (FR-STF-01) -->
+        <Label text="Linked Account *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <VBox spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <ComboBox fx:id="userAccountCombo" promptText="Select Staff Login Account"
+                      maxWidth="Infinity" styleClass="combo-box" />
+            <Label fx:id="editingUserLabel" text="User Name" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D;"
+                   visible="false" managed="false" />
+        </VBox>
+
+        <!-- Trade Specialization (FR-STF-02) -->
+        <Label text="Specialization *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+        <ComboBox fx:id="specializationCombo" promptText="Select Trade"
+                  maxWidth="Infinity" styleClass="combo-box"
+                  GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+        <!-- Contact Phone -->
+        <Label text="Contact Phone *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <TextField fx:id="phoneField" promptText="e.g. +91 9876543210" styleClass="text-field"
+                   GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+        <!-- Active Status (visible when editing) -->
+        <Label fx:id="activeLabel" text="Status" styleClass="field-label"
+               GridPane.columnIndex="0" GridPane.rowIndex="3" />
+        <CheckBox fx:id="activeCheckBox" text="Active Staff Member" selected="true"
+                  style="-fx-text-fill: #4A3E3D; -fx-font-size: 12px;"
+                  GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+    </GridPane>
+
+    <!-- Error label -->
+    <Label fx:id="dialogErrorLabel" text="" styleClass="error-label" wrapText="true" visible="false" managed="false" />
+
+    <!-- Actions -->
+    <HBox alignment="CENTER_RIGHT" spacing="12">
+        <Button fx:id="cancelButton" text="Cancel" styleClass="btn-secondary" />
+        <Button fx:id="saveButton" text="Save Staff Record" styleClass="btn-primary" />
+    </HBox>
+
+</VBox>
