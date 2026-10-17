@@ -1,0 +1,52 @@
+# ==========================================================
+# Standard .gitignore for Java / Maven / JavaFX Projects
+# ==========================================================
+
+# Compiled class files & build directories
+target/
+*.class
+
+# Log files
+*.log
+*.log.*
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven temporary files
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar.tmp
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+
+# Visual Studio Code
+.vscode/
+
+# OS Generated Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# Crash and dump logs
+hs_err_pid*
+replay_pid*

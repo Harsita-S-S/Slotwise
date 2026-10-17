@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Arc?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Polygon?>
+<?import javafx.geometry.Insets?>
+
+<!--
+  SlotWise Login Screen (FR-AUTH-01)
+  Center box layout with floating decorative shapes behind the card.
+  Controller: com.fms.controller.LoginController
+-->
+<AnchorPane prefWidth="900" prefHeight="600"
+            styleClass="login-background"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.fms.controller.LoginController">
+
+    <!-- ============================================================
+         DECORATIVE FLOATING SHAPES (behind the login card)
+         ============================================================ -->
+
+    <!-- Large circle - top left -->
+    <Circle centerX="120" centerY="100" radius="80" styleClass="deco-circle"
+            AnchorPane.leftAnchor="40" AnchorPane.topAnchor="60"/>
+
+    <!-- Small circle - top right -->
+    <Circle centerX="0" centerY="0" radius="35" styleClass="deco-circle"
+            AnchorPane.rightAnchor="100" AnchorPane.topAnchor="80"/>
+
+    <!-- Large circle - bottom right -->
+    <Circle centerX="0" centerY="0" radius="70" styleClass="deco-circle"
+            AnchorPane.rightAnchor="30" AnchorPane.bottomAnchor="60"/>
+
+    <!-- Small circle - bottom left -->
+    <Circle centerX="0" centerY="0" radius="25" styleClass="deco-circle-small"
+            AnchorPane.leftAnchor="150" AnchorPane.bottomAnchor="120"/>
+
+    <!-- Small circle - mid left -->
+    <Circle centerX="0" centerY="0" radius="15" styleClass="deco-circle-small"
+            AnchorPane.leftAnchor="80" AnchorPane.topAnchor="350"/>
+
+    <!-- Small circle - mid right -->
+    <Circle centerX="0" centerY="0" radius="20" styleClass="deco-circle"
+            AnchorPane.rightAnchor="200" AnchorPane.topAnchor="160"/>
+
+    <!-- Diamond shape - top right area -->
+    <Polygon points="0,-18, 18,0, 0,18, -18,0" styleClass="deco-diamond"
+             AnchorPane.rightAnchor="150" AnchorPane.topAnchor="120"/>
+
+    <!-- Diamond shape - bottom left area -->
+    <Polygon points="0,-14, 14,0, 0,14, -14,0" styleClass="deco-diamond"
+             AnchorPane.leftAnchor="200" AnchorPane.bottomAnchor="180"/>
+
+    <!-- Diamond shape - right edge mid -->
+    <Polygon points="0,-12, 12,0, 0,12, -12,0" styleClass="deco-diamond"
+             AnchorPane.rightAnchor="60" AnchorPane.topAnchor="280"/>
+
+    <!-- Arc - top area -->
+    <Arc centerX="0" centerY="0" radiusX="120" radiusY="120"
+         startAngle="30" length="120" styleClass="deco-arc"
+         AnchorPane.leftAnchor="280" AnchorPane.topAnchor="30"/>
+
+    <!-- Arc - bottom area -->
+    <Arc centerX="0" centerY="0" radiusX="100" radiusY="100"
+         startAngle="200" length="100" styleClass="deco-arc"
+         AnchorPane.rightAnchor="180" AnchorPane.bottomAnchor="40"/>
+
+
+    <!-- ============================================================
+         LOGIN CARD (centered)
+         ============================================================ -->
+
+    <VBox fx:id="loginCard" styleClass="login-card"
+          prefWidth="380" spacing="4"
+          AnchorPane.topAnchor="90" AnchorPane.bottomAnchor="90"
+          AnchorPane.leftAnchor="260" AnchorPane.rightAnchor="260"
+          alignment="CENTER">
+
+        <!-- Logo Icon -->
+        <Label text="◈" styleClass="login-logo-icon" />
+
+        <!-- App Title -->
+        <Label text="SlotWise" styleClass="login-title" />
+
+        <!-- Subtitle -->
+        <Label text="Facility Management System" styleClass="login-subtitle" />
+
+        <!-- Spacer -->
+        <Region prefHeight="20" />
+
+        <!-- Username Label -->
+        <Label text="Username" styleClass="field-label" />
+
+        <!-- Username Field -->
+        <TextField fx:id="usernameField" promptText="Enter your username"
+                   styleClass="text-field" maxWidth="300" />
+
+        <!-- Spacer -->
+        <Region prefHeight="6" />
+
+        <!-- Password Label -->
+        <Label text="Password" styleClass="field-label" />
+
+        <!-- Password Field -->
+        <PasswordField fx:id="passwordField" promptText="Enter your password"
+                       styleClass="password-field" maxWidth="300" />
+
+        <!-- Spacer -->
+        <Region prefHeight="4" />
+
+        <!-- Error Label (hidden by default) -->
+        <Label fx:id="errorLabel" text="" styleClass="error-label"
+               wrapText="true" maxWidth="300" />
+
+        <!-- Spacer -->
+        <Region prefHeight="8" />
+
+        <!-- Sign In Button -->
+        <Button fx:id="signInButton" text="Sign In"
+                styleClass="btn-primary" maxWidth="300"
+                prefHeight="42"
+                onAction="#handleSignIn" />
+
+        <!-- Spacer -->
+        <Region prefHeight="12" />
+
+        <!-- Footer -->
+        <Label text="Contact your administrator for access"
+               styleClass="login-footer" />
+
+    </VBox>
+
+</AnchorPane>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  SlotWise Dashboard Screen (FR-AUTH-03, FR-AUTH-04, FR-AUTH-05)
+  Role-specific dashboard with responsive navigation sidebar.
+  Controller: com.fms.controller.DashboardController
+-->
+<BorderPane prefWidth="1050" prefHeight="680"
+            styleClass="root"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.fms.controller.DashboardController">
+
+    <!-- ============================================================
+         LEFT SIDEBAR NAVIGATION
+         ============================================================ -->
+    <left>
+        <VBox prefWidth="230" minWidth="230" maxWidth="230"
+              styleClass="sidebar">
+
+            <!-- Brand header -->
+            <VBox styleClass="sidebar-brand" spacing="2">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="◈" style="-fx-font-size: 22px; -fx-text-fill: #D97757; -fx-font-weight: bold;" />
+                    <Label fx:id="brandTitle" text="SlotWise" styleClass="sidebar-brand-title" />
+                </HBox>
+                <Label fx:id="brandSubtitle" text="Facility Management" styleClass="sidebar-brand-subtitle" />
+            </VBox>
+
+            <Separator style="-fx-padding: 4 0 8 0;" />
+
+            <!-- Navigation buttons list -->
+            <VBox spacing="4" VBox.vgrow="ALWAYS">
+                <Button fx:id="navDashboard" text="  ⊞   Dashboard"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavDashboard" />
+
+                <Button fx:id="navFacilities" text="  🏢   Facilities"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavFacilities" />
+
+                <Button fx:id="navBookings" text="  📅   Bookings"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavBookings" />
+
+                <Button fx:id="navMaintenance" text="  🔧   Maintenance"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavMaintenance" />
+
+                <Button fx:id="navEquipment" text="  📦   Equipment"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavEquipment" />
+
+                <Button fx:id="navStaff" text="  👥   Staff"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavStaff" />
+
+                <Button fx:id="navUsers" text="  👤   Users"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavUsers" />
+
+                <Button fx:id="navReports" text="  📊   Reports"
+                        styleClass="sidebar-btn" maxWidth="Infinity"
+                        onAction="#handleNavReports" />
+            </VBox>
+
+            <!-- User profile & Logout area -->
+            <VBox styleClass="sidebar-user-info" spacing="8">
+                <VBox spacing="2">
+                    <Label fx:id="userNameLabel" text="User Name" styleClass="sidebar-user-name" />
+                    <Label fx:id="userRoleLabel" text="Role" styleClass="sidebar-user-role" />
+                </VBox>
+
+                <Button fx:id="logoutButton" text="Sign Out"
+                        styleClass="btn-secondary" maxWidth="Infinity"
+                        onAction="#handleLogout" />
+            </VBox>
+
+        </VBox>
+    </left>
+
+    <!-- ============================================================
+         CENTER MAIN CONTENT AREA
+         ============================================================ -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <VBox fx:id="contentArea" spacing="24" style="-fx-padding: 32;">
+
+                <!-- Welcome Banner Card -->
+                <VBox styleClass="card" spacing="8">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label fx:id="welcomeLabel" text="Welcome to SlotWise!"
+                                   style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                            <Label fx:id="roleInfoLabel"
+                                   text="Access role-specific facilities, bookings, and schedules."
+                                   styleClass="card-subtitle" wrapText="true" />
+                        </VBox>
+                        <Label text="◈" style="-fx-font-size: 40px; -fx-text-fill: #D97757; -fx-opacity: 0.25;" />
+                    </HBox>
+                </VBox>
+
+                <!-- Quick Stats Cards Row -->
+                <HBox spacing="16">
+
+                    <!-- Stat Card 1: Facilities -->
+                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="FACILITIES" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        <Label text="6 Active" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                        <Label text="Labs, Halls, &amp; Classrooms" styleClass="card-subtitle" />
+                    </VBox>
+
+                    <!-- Stat Card 2: Slots -->
+                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="TIME SLOTS" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        <Label text="10 Slots" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+                        <Label text="08:00 AM – 06:00 PM Daily" styleClass="card-subtitle" />
+                    </VBox>
+
+                    <!-- Stat Card 3: Security & Session -->
+                    <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="SECURITY" styleClass="card-subtitle" style="-fx-font-weight: bold;" />
+                        <Label text="Protected" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #6B8F71;" />
+                        <Label text="BCrypt Hash &amp; Role-based RBAC" styleClass="card-subtitle" />
+                    </VBox>
+
+                </HBox>
+
+                <!-- Quick Overview Section Card -->
+                <VBox styleClass="card" spacing="14">
+                    <Label text="Quick Navigation &amp; Module Overview" styleClass="card-title" />
+                    <Label text="Use the left navigation bar to access features permitted for your role."
+                           styleClass="card-subtitle" />
+                    <Separator />
+                    <VBox spacing="10">
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
+                            <Label text="Admin: Full system management, user accounts, role permissions, and audit logs."
+                                   style="-fx-text-fill: #4A3E3D;" />
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
+                            <Label text="Staff: Facility scheduling, maintenance tickets, and equipment tracking."
+                                   style="-fx-text-fill: #4A3E3D;" />
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="•" style="-fx-font-size: 18px; -fx-text-fill: #D97757;" />
+                            <Label text="User: Browse facilities, view availability, and request slot bookings."
+                                   style="-fx-text-fill: #4A3E3D;" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
