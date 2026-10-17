@@ -32,33 +32,33 @@
             <!-- Facility Selection -->
             <VBox spacing="4">
                 <Label text="FACILITY / ROOM *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
-                <ComboBox fx:id="dlgFacilityCombo" maxWidth="Infinity" promptText="Choose a room or hall..." styleClass="combo-box" />
+                <ComboBox fx:id="dlgFacilityCombo" id="dlgFacilityCombo" maxWidth="Infinity" promptText="Choose a room or hall..." styleClass="combo-box" />
             </VBox>
 
             <!-- Date Selection Mode -->
             <VBox spacing="8" style="-fx-background-color: #F8F5F0; -fx-border-color: #E5DDD0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
                 <HBox spacing="16" alignment="CENTER_LEFT">
                     <Label text="BOOKING DURATION:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
-                    <RadioButton fx:id="rbSingleDay" text="Single Day" selected="true">
+                    <RadioButton fx:id="rbSingleDay" id="rbSingleDay" text="Single Day" selected="true">
                         <toggleGroup>
                             <ToggleGroup fx:id="dateModeGroup" />
                         </toggleGroup>
                     </RadioButton>
-                    <RadioButton fx:id="rbMultiDay" text="Multi-Day Range" toggleGroup="$dateModeGroup" />
+                    <RadioButton fx:id="rbMultiDay" id="rbMultiDay" text="Multi-Day Range" toggleGroup="$dateModeGroup" />
                 </HBox>
 
                 <!-- Single Day DatePicker -->
-                <HBox fx:id="singleDateBox" spacing="10" alignment="CENTER_LEFT">
+                <HBox fx:id="singleDateBox" id="singleDateBox" spacing="10" alignment="CENTER_LEFT">
                     <Label text="Date:" style="-fx-min-width: 75; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                    <DatePicker fx:id="dlgDatePicker" HBox.hgrow="ALWAYS" prefWidth="220" />
+                    <DatePicker fx:id="dlgDatePicker" id="dlgDatePicker" HBox.hgrow="ALWAYS" prefWidth="220" />
                 </HBox>
 
                 <!-- Multi-Day DatePickers -->
-                <HBox fx:id="multiDateBox" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
+                <HBox fx:id="multiDateBox" id="multiDateBox" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
                     <Label text="From:" style="-fx-min-width: 45; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                    <DatePicker fx:id="dlgStartDatePicker" prefWidth="170" />
+                    <DatePicker fx:id="dlgStartDatePicker" id="dlgStartDatePicker" prefWidth="170" />
                     <Label text="To:" style="-fx-min-width: 30; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                    <DatePicker fx:id="dlgEndDatePicker" prefWidth="170" />
+                    <DatePicker fx:id="dlgEndDatePicker" id="dlgEndDatePicker" prefWidth="170" />
                 </HBox>
             </VBox>
 
@@ -67,36 +67,36 @@
                 <HBox alignment="CENTER_LEFT" spacing="12">
                     <Label text="TIME SLOTS:" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <CheckBox fx:id="chkFullDay" text="⚡ Full Day (08:00 – 18:00)" style="-fx-font-weight: bold; -fx-text-fill: #D97757;" />
+                    <CheckBox fx:id="chkFullDay" id="chkFullDay" text="⚡ Full Day (08:00 – 18:00)" style="-fx-font-weight: bold; -fx-text-fill: #D97757;" />
                 </HBox>
 
                 <!-- Start & End Time Range Dropdowns -->
-                <HBox fx:id="timeRangeBox" spacing="10" alignment="CENTER_LEFT">
+                <HBox fx:id="timeRangeBox" id="timeRangeBox" spacing="10" alignment="CENTER_LEFT">
                     <Label text="From:" style="-fx-min-width: 45; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                    <ComboBox fx:id="comboStartTime" prefWidth="110" />
+                    <ComboBox fx:id="comboStartTime" id="comboStartTime" prefWidth="110" />
                     <Label text="To:" style="-fx-min-width: 30; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
-                    <ComboBox fx:id="comboEndTime" prefWidth="110" />
+                    <ComboBox fx:id="comboEndTime" id="comboEndTime" prefWidth="110" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="lblSlotSummary" text="1 slot (1 hr)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;" />
+                    <Label fx:id="lblSlotSummary" id="lblSlotSummary" text="1 slot (1 hr)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #D97757;" />
                 </HBox>
             </VBox>
 
             <!-- Form Inputs -->
             <VBox spacing="4">
                 <Label text="BOOKING PURPOSE *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
-                <TextField fx:id="dlgPurposeField" promptText="e.g. Lab Session, Seminar, Guest Lecture, Club Meeting" />
+                <TextField fx:id="dlgPurposeField" id="dlgPurposeField" promptText="e.g. Lab Session, Seminar, Guest Lecture, Club Meeting" />
             </VBox>
 
             <VBox spacing="4">
                 <Label text="EXPECTED ATTENDEES COUNT *" styleClass="field-label" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #7A6B66;" />
-                <TextField fx:id="dlgAttendeesField" promptText="Enter number of attendees" />
-                <Label fx:id="dlgCapacityFeedback" text="" wrapText="true" style="-fx-font-size: 11px;" visible="false" managed="false" />
+                <TextField fx:id="dlgAttendeesField" id="dlgAttendeesField" promptText="Enter number of attendees" />
+                <Label fx:id="dlgCapacityFeedback" id="dlgCapacityFeedback" text="" wrapText="true" style="-fx-font-size: 11px;" visible="false" managed="false" />
             </VBox>
 
             <!-- Approval Notice -->
-            <HBox fx:id="dlgApprovalNotice" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
+            <HBox fx:id="dlgApprovalNotice" id="dlgApprovalNotice" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
                   style="-fx-background-color: rgba(201, 168, 76, 0.15); -fx-border-color: #C9A84C; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;">
-                <Label fx:id="dlgApprovalNoticeLabel" text="ℹ This facility requires Admin approval. Your booking will start as 'Pending'."
+                <Label fx:id="dlgApprovalNoticeLabel" id="dlgApprovalNoticeLabel" text="ℹ This facility requires Admin approval. Your booking will start as 'Pending'."
                        style="-fx-font-size: 11px; -fx-text-fill: #856404;" wrapText="true" />
             </HBox>
 
@@ -107,8 +107,8 @@
 
     <!-- Action Buttons -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
-        <Button fx:id="btnCancel" text="Cancel" styleClass="btn-secondary" />
-        <Button fx:id="btnConfirm" text="Confirm Reservation" styleClass="btn-primary" />
+        <Button fx:id="btnCancel" id="btnCancel" text="Cancel" styleClass="btn-secondary" />
+        <Button fx:id="btnConfirm" id="btnConfirm" text="Confirm Reservation" styleClass="btn-primary" />
     </HBox>
 
 </VBox>

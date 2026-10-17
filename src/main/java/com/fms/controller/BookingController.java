@@ -19,6 +19,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -333,31 +334,36 @@ public class BookingController {
             dialogStage.initModality(Modality.APPLICATION_MODAL);
             dialogStage.setTitle("Reserve Facility — SlotWise");
 
-            // Look up dialog elements
-            ComboBox<Facility> dlgFacilityCombo = (ComboBox<Facility>) root.lookup("#dlgFacilityCombo");
-            RadioButton rbSingleDay = (RadioButton) root.lookup("#rbSingleDay");
-            RadioButton rbMultiDay = (RadioButton) root.lookup("#rbMultiDay");
-            HBox singleDateBox = (HBox) root.lookup("#singleDateBox");
-            HBox multiDateBox = (HBox) root.lookup("#multiDateBox");
-            DatePicker dlgDatePicker = (DatePicker) root.lookup("#dlgDatePicker");
-            DatePicker dlgStartDatePicker = (DatePicker) root.lookup("#dlgStartDatePicker");
-            DatePicker dlgEndDatePicker = (DatePicker) root.lookup("#dlgEndDatePicker");
+            // Look up dialog elements with dual fallback (FXMLLoader namespace + CSS ID)
+            Map<String, Object> ns = loader.getNamespace();
+            ComboBox<Facility> dlgFacilityCombo = findDialogNode(ns, root, "dlgFacilityCombo");
+            RadioButton rbSingleDay = findDialogNode(ns, root, "rbSingleDay");
+            RadioButton rbMultiDay = findDialogNode(ns, root, "rbMultiDay");
+            HBox singleDateBox = findDialogNode(ns, root, "singleDateBox");
+            HBox multiDateBox = findDialogNode(ns, root, "multiDateBox");
+            DatePicker dlgDatePicker = findDialogNode(ns, root, "dlgDatePicker");
+            DatePicker dlgStartDatePicker = findDialogNode(ns, root, "dlgStartDatePicker");
+            DatePicker dlgEndDatePicker = findDialogNode(ns, root, "dlgEndDatePicker");
 
-            CheckBox chkFullDay = (CheckBox) root.lookup("#chkFullDay");
-            HBox timeRangeBox = (HBox) root.lookup("#timeRangeBox");
-            ComboBox<String> comboStartTime = (ComboBox<String>) root.lookup("#comboStartTime");
-            ComboBox<String> comboEndTime = (ComboBox<String>) root.lookup("#comboEndTime");
-            Label lblSlotSummary = (Label) root.lookup("#lblSlotSummary");
+            CheckBox chkFullDay = findDialogNode(ns, root, "chkFullDay");
+            HBox timeRangeBox = findDialogNode(ns, root, "timeRangeBox");
+            ComboBox<String> comboStartTime = findDialogNode(ns, root, "comboStartTime");
+            ComboBox<String> comboEndTime = findDialogNode(ns, root, "comboEndTime");
+            Label lblSlotSummary = findDialogNode(ns, root, "lblSlotSummary");
 
-            TextField dlgPurposeField = (TextField) root.lookup("#dlgPurposeField");
-            TextField dlgAttendeesField = (TextField) root.lookup("#dlgAttendeesField");
-            Label dlgCapacityFeedback = (Label) root.lookup("#dlgCapacityFeedback");
-            HBox dlgApprovalNotice = (HBox) root.lookup("#dlgApprovalNotice");
-            Label dlgApprovalNoticeLabel = (Label) root.lookup("#dlgApprovalNoticeLabel");
-            Label dialogErrorLabel = (Label) root.lookup("#dialogErrorLabel");
+            TextField dlgPurposeField = findDialogNode(ns, root, "dlgPurposeField");
+            TextField dlgAttendeesField = findDialogNode(ns, root, "dlgAttendeesField");
+            Label dlgCapacityFeedback = findDialogNode(ns, root, "dlgCapacityFeedback");
+            HBox dlgApprovalNotice = findDialogNode(ns, root, "dlgApprovalNotice");
+            Label dlgApprovalNoticeLabel = findDialogNode(ns, root, "dlgApprovalNoticeLabel");
+            Label dialogErrorLabel = findDialogNode(ns, root, "dialogErrorLabel");
 
-            Button btnCancel = (Button) root.lookup("#btnCancel");
-            Button btnConfirm = (Button) root.lookup("#btnConfirm");
+            Button btnCancel = findDialogNode(ns, root, "btnCancel");
+            Button btnConfirm = findDialogNode(ns, root, "btnConfirm");
+
+            if (dlgFacilityCombo == null) {
+                throw new IllegalStateException("Required dialog control 'dlgFacilityCombo' could not be resolved.");
+            }
 
             // Populate facilities
             List<Facility> facilities = facilityDAO.findAllActive();
@@ -593,6 +599,14 @@ public class BookingController {
             label.setVisible(true);
             label.setManaged(true);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Node> T findDialogNode(Map<String, Object> ns, Parent root, String id) {
+        if (ns != null && ns.containsKey(id) && ns.get(id) instanceof Node) {
+            return (T) ns.get(id);
+        }
+        return (T) root.lookup("#" + id);
     }
 
     // ---------------------------------------------------------------

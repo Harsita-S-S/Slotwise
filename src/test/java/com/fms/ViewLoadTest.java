@@ -75,7 +75,22 @@ public class ViewLoadTest {
         URL url = getClass().getResource("/com/fms/view/booking_dialog.fxml");
         assertNotNull(url, "booking_dialog.fxml not found");
         FXMLLoader loader = new FXMLLoader(url);
-        Object root = loader.load();
+        javafx.scene.Parent root = loader.load();
         assertNotNull(root, "booking dialog root should not be null");
+
+        // Verify FXML namespace resolution (reliable way to access FXML nodes)
+        assertNotNull(loader.getNamespace().get("dlgFacilityCombo"), "dlgFacilityCombo namespace lookup");
+        assertNotNull(loader.getNamespace().get("rbSingleDay"), "rbSingleDay namespace lookup");
+        assertNotNull(loader.getNamespace().get("rbMultiDay"), "rbMultiDay namespace lookup");
+        assertNotNull(loader.getNamespace().get("dlgDatePicker"), "dlgDatePicker namespace lookup");
+        assertNotNull(loader.getNamespace().get("dlgStartDatePicker"), "dlgStartDatePicker namespace lookup");
+        assertNotNull(loader.getNamespace().get("dlgEndDatePicker"), "dlgEndDatePicker namespace lookup");
+        assertNotNull(loader.getNamespace().get("chkFullDay"), "chkFullDay namespace lookup");
+        assertNotNull(loader.getNamespace().get("comboStartTime"), "comboStartTime namespace lookup");
+        assertNotNull(loader.getNamespace().get("comboEndTime"), "comboEndTime namespace lookup");
+        assertNotNull(loader.getNamespace().get("dlgPurposeField"), "dlgPurposeField namespace lookup");
+        assertNotNull(loader.getNamespace().get("dlgAttendeesField"), "dlgAttendeesField namespace lookup");
+        assertNotNull(loader.getNamespace().get("btnConfirm"), "btnConfirm namespace lookup");
+        assertNotNull(loader.getNamespace().get("btnCancel"), "btnCancel namespace lookup");
     }
 }
