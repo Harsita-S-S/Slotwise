@@ -1,5 +1,6 @@
 package com.fms.controller;
 
+import javafx.concurrent.Task;
 import com.fms.dao.FacilityDAO;
 import com.fms.exception.BookingConflictException;
 import com.fms.exception.InvalidInputException;
@@ -66,6 +67,19 @@ public class BookingController {
     @FXML private TableColumn<Facility, String> colFacilityAmenities;
     @FXML private TableColumn<Facility, Void> colFacilityPolicy;
     @FXML private TableColumn<Facility, Void> colFacilityAction;
+
+    @FXML private DatePicker availDatePicker;
+    @FXML private ComboBox<String> slotFromCombo;
+    @FXML private ComboBox<String> slotToCombo;
+    @FXML private TableColumn<Facility, Void> colFacilitySlots;
+
+    private static final List<String> START_TIMES =
+            List.of("08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00");
+    private static final List<String> END_TIMES =
+            List.of("09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00");
+
+    private final Map<Integer, FacilitySlotSummary> slotSummaries = new HashMap<>();
+    private int loadSeq = 0;
 
     // View 2: My Bookings
     @FXML private VBox myBookingsPane;
@@ -219,7 +233,7 @@ public class BookingController {
                 bookBtn.setOnAction(e -> {
                     Facility f = getTableRow().getItem();
                     if (f != null) {
-                        openBookingDialog(f);
+                        openBookingDialog(f, availDatePicker != null ? availDatePicker.getValue() : null);
                     }
                 });
             }
@@ -232,6 +246,19 @@ public class BookingController {
                 } else {
                     setGraphic(bookBtn);
                 }
+            }
+        });
+
+        colFacilitySlots.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    return;
+                }
+                FacilitySlotSummary summary = slotSummaries.get(getTableRow().getItem().getFacilityId());
+                setGraphic(summary == null ? null : buildSlotStrip(summary));
             }
         });
     }
@@ -255,6 +282,36 @@ public class BookingController {
         if (minCapacityField != null) {
             minCapacityField.textProperty().addListener((obs, oldV, newV) -> applyFilters());
         }
+
+        if (availDatePicker != null) {
+            availDatePicker.setValue(LocalTime.now().isAfter(LocalTime.of(18, 0))
+                    ? LocalDate.now().plusDays(1) : LocalDate.now());
+            availDatePicker.setDayCellFactory(p -> new DateCell() {
+                @Override
+                public void updateItem(LocalDate d, boolean empty) {
+                    super.updateItem(d, empty);
+                    if (!empty && (d.isBefore(LocalDate.now()) || d.isAfter(LocalDate.now().plusDays(30)))) {
+                        setDisable(true); // BR-02: today to +30 days
+                    }
+                }
+            });
+            availDatePicker.valueProperty().addListener((obs, o, n) -> loadFacilities());
+        }
+
+        if (slotFromCombo != null && slotToCombo != null) {
+            List<String> from = new ArrayList<>();
+            from.add("Any start");
+            from.addAll(START_TIMES);
+            List<String> to = new ArrayList<>();
+            to.add("Any end");
+            to.addAll(END_TIMES);
+            slotFromCombo.setItems(FXCollections.observableArrayList(from));
+            slotToCombo.setItems(FXCollections.observableArrayList(to));
+            slotFromCombo.setValue("Any start");
+            slotToCombo.setValue("Any end");
+            slotFromCombo.valueProperty().addListener((obs, o, n) -> applyFilters());
+            slotToCombo.valueProperty().addListener((obs, o, n) -> applyFilters());
+        }
     }
 
     private void applyFilters() {
@@ -269,6 +326,19 @@ public class BookingController {
             try { minCap = Integer.parseInt(capText); } catch (NumberFormatException ignored) {}
         }
         final int filterMinCap = minCap;
+
+        int slotFrom = 0;
+        int slotTo = 0; // 0 means "no slot filter"
+        if (slotFromCombo != null && slotToCombo != null) {
+            int startIdx = START_TIMES.indexOf(slotFromCombo.getValue());
+            int endIdx = END_TIMES.indexOf(slotToCombo.getValue());
+            if (startIdx >= 0 && endIdx >= startIdx) {
+                slotFrom = startIdx + 1;
+                slotTo = endIdx + 1;
+            }
+        }
+        final int filterSlotFrom = slotFrom;
+        final int filterSlotTo = slotTo;
 
         filteredFacilityList.setPredicate(facility -> {
             if (facility == null) return false;
@@ -293,6 +363,15 @@ public class BookingController {
                 return false;
             }
 
+            // Slot filter: facility must be FREE for every selected slot on the chosen date
+            if (filterSlotFrom > 0) {
+                FacilitySlotSummary summary = slotSummaries.get(facility.getFacilityId());
+                if (summary == null) return false;
+                for (int slot = filterSlotFrom; slot <= filterSlotTo; slot++) {
+                    if (summary.getStatusForSlot(slot) != SlotStatus.FREE) return false;
+                }
+            }
+
             return true;
         });
     }
@@ -302,23 +381,88 @@ public class BookingController {
         if (searchField != null) searchField.clear();
         if (typeFilterCombo != null) typeFilterCombo.setValue("All Types");
         if (minCapacityField != null) minCapacityField.clear();
+        if (slotFromCombo != null) slotFromCombo.setValue("Any start");
+        if (slotToCombo != null) slotToCombo.setValue("Any end");
         applyFilters();
     }
 
+  
+
     private void loadFacilities() {
-        try {
-            List<Facility> active = facilityDAO.findAllActive();
-            masterFacilityList.setAll(active);
+        final LocalDate date = (availDatePicker != null && availDatePicker.getValue() != null)
+                ? availDatePicker.getValue() : LocalDate.now();
+        final int mySeq = ++loadSeq;
+
+        Task<List<FacilitySlotSummary>> task = new Task<>() {
+            @Override
+            protected List<FacilitySlotSummary> call() {
+                return bookingService.getFacilitySlotGrid(date, null, null, null);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            if (mySeq != loadSeq) return; // a newer load is in flight, drop this one
+            slotSummaries.clear();
+            List<Facility> facilities = new ArrayList<>();
+            for (FacilitySlotSummary s : task.getValue()) {
+                slotSummaries.put(s.getFacility().getFacilityId(), s);
+                facilities.add(s.getFacility());
+            }
+            masterFacilityList.setAll(facilities);
             applyFilters();
-        } catch (Exception e) {
-            logger.error("Failed to load facilities for booking: {}", e.getMessage(), e);
-            showAlert("Failed to load facilities: " + e.getMessage());
+            facilityTable.refresh();
+        });
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            logger.error("Failed to load facility availability: {}", ex.getMessage(), ex);
+            showAlert("Failed to load availability: " + ex.getMessage());
+        });
+
+        Thread t = new Thread(task, "availability-loader");
+        t.setDaemon(true);
+        t.start();
+    }
+
+
+    private HBox buildSlotStrip(FacilitySlotSummary summary) {
+        HBox strip = new HBox(3);
+        strip.setAlignment(Pos.CENTER_LEFT);
+        for (int slot = 1; slot <= 10; slot++) {
+            SlotStatus st = summary.getStatusForSlot(slot);
+            Label cell = new Label(String.valueOf(slot));
+            cell.setMinSize(22, 22);
+            cell.setPrefSize(22, 22);
+            cell.setAlignment(Pos.CENTER);
+            cell.setStyle("-fx-background-color: " + slotColor(st) + "; -fx-text-fill: "
+                    + (st == SlotStatus.PAST ? "#998C87" : "white")
+                    + "; -fx-font-size: 10px; -fx-font-weight: bold; -fx-background-radius: 4;");
+            Tooltip.install(cell, new Tooltip(slotTooltip(summary, slot, st)));
+            strip.getChildren().add(cell);
         }
+        return strip;
+    }
+
+    private String slotColor(SlotStatus st) {
+        return switch (st) {
+            case FREE -> "#6B8F71";
+            case BOOKED -> "#A15252";
+            case PENDING -> "#C9A84C";
+            case MAINTENANCE -> "#7A6B66";
+            default -> "#E5DDD0"; // PAST
+        };
+    }
+
+    private String slotTooltip(FacilitySlotSummary summary, int slot, SlotStatus st) {
+        String text = "Slot " + slot + " • " + Booking.formatSlotTime(slot) + " • " + st.getDisplayName();
+        Booking b = summary.getSlotBookings().get(slot);
+        if (b != null && SessionManager.getInstance().isAdmin() && st != SlotStatus.FREE) {
+            text += " • " + (b.getUserFullName() != null ? b.getUserFullName() : b.getUsername());
+        }
+        return text;
     }
 
     @FXML
     public void handleOpenNewBookingDialog() {
-        openBookingDialog(null);
+        openBookingDialog(null, availDatePicker != null ? availDatePicker.getValue() : null);
     }
 
     // ---------------------------------------------------------------
@@ -326,6 +470,10 @@ public class BookingController {
     // ---------------------------------------------------------------
 
     public void openBookingDialog(Facility preselectedFacility) {
+        openBookingDialog(preselectedFacility, null);
+    }
+
+    public void openBookingDialog(Facility preselectedFacility, LocalDate preselectedDate) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/fms/view/booking_dialog.fxml"));
             Parent root = loader.load();
@@ -385,8 +533,9 @@ public class BookingController {
             }
 
             // Smart date defaults (tomorrow if after 18:00 today)
-            LocalDate defaultDate = LocalTime.now().isAfter(LocalTime.of(18, 0))
-                    ? LocalDate.now().plusDays(1) : LocalDate.now();
+            LocalDate defaultDate = preselectedDate != null ? preselectedDate
+                    : (LocalTime.now().isAfter(LocalTime.of(18, 0))
+                        ? LocalDate.now().plusDays(1) : LocalDate.now());
 
             dlgDatePicker.setValue(defaultDate);
             dlgStartDatePicker.setValue(defaultDate);
