@@ -53,3 +53,5 @@ replay_pid*
 
 # Developer notes (kept locally, not committed)
 devlog.txt
+
+src/main/resources/com/fms/config/db.properties

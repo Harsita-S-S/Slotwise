@@ -3,7 +3,7 @@
 
 db.url=jdbc:mysql://localhost:3306/fms_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 db.user=root
-db.password=HarryPotter1805
+db.password=CHANGE_ME
 # HikariCP Connection Pool Settings (NFR-09: Scalability & Performance)
 db.pool.maxSize=10
 db.pool.minIdle=2
