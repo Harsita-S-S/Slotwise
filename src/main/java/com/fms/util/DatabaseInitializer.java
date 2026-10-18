@@ -493,6 +493,12 @@ public class DatabaseInitializer {
     }
 
     private static void seedFacilities(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM facilities")) {
+            if (rs.next() && rs.getInt(1) > 0) {
+                return; // facilities already seeded, do nothing
+            }
+        }
         seedFacilitiesRich(conn);
     }
 }

@@ -297,26 +297,39 @@ public class BookingDAO {
      * Marks passed approved bookings as Completed (FR-BKG-10, Sec 7.3).
      */
     public int markPassedApprovedBookingsCompleted(LocalDate currentDate, int currentSlotNo) {
-        String sql = "UPDATE bookings SET status = 'Completed', active_flag = NULL " +
+        String completeSql = "UPDATE bookings SET status = 'Completed', active_flag = NULL " +
                      "WHERE status = 'Approved' AND active_flag = 1 " +
                      "AND (booking_date < ? OR (booking_date = ? AND slot_no < ?))";
+        String expireSql = "UPDATE bookings SET status = 'Rejected', " +
+                     "rejection_reason = 'Not approved before the slot started', active_flag = NULL " +
+                     "WHERE status = 'Pending' AND active_flag = 1 " +
+                     "AND (booking_date < ? OR (booking_date = ? AND slot_no <= ?))";
 
-        try (Connection conn = DBConnection.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setDate(1, Date.valueOf(currentDate));
-            pstmt.setDate(2, Date.valueOf(currentDate));
-            pstmt.setInt(3, currentSlotNo);
-
-            int affected = pstmt.executeUpdate();
-            if (affected > 0) {
-                logger.info("Auto-completed {} passed approved bookings.", affected);
+        try (Connection conn = DBConnection.getInstance().getConnection()) {
+            int completed = runPassedUpdate(conn, completeSql, currentDate, currentSlotNo);
+            int expired = runPassedUpdate(conn, expireSql, currentDate, currentSlotNo);
+            if (completed > 0) {
+                logger.info("Auto-completed {} passed approved bookings.", completed);
             }
-            return affected;
+            if (expired > 0) {
+                logger.info("Auto-rejected {} pending bookings whose slot started.", expired);
+            }
+            return completed + expired;
         } catch (SQLException e) {
-            logger.error("Error auto-completing passed bookings: {}", e.getMessage());
+            logger.error("Error updating passed bookings: {}", e.getMessage());
             return 0;
         }
     }
+
+    private int runPassedUpdate(Connection conn, String sql, LocalDate date, int slotNo) throws SQLException {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDate(1, Date.valueOf(date));
+            pstmt.setDate(2, Date.valueOf(date));
+            pstmt.setInt(3, slotNo);
+            return pstmt.executeUpdate();
+        }
+    }
+    
 
     /**
      * Returns the count of active bookings for today (all statuses except Cancelled).
@@ -324,7 +337,7 @@ public class BookingDAO {
      */
     public int countTodayActiveBookings() {
         String sql = "SELECT COUNT(*) FROM bookings " +
-                     "WHERE booking_date = CURDATE() AND active_flag = 1";
+             "WHERE booking_date = CURDATE() AND status IN ('Pending', 'Approved', 'Completed')";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {

@@ -49,39 +49,38 @@ public class BookingService {
      * @throws BookingConflictException if any slot clashes with an existing booking or maintenance
      */
     public List<Booking> createBooking(int facilityId, LocalDate bookingDate, List<Integer> slots,
-                                      String purpose, int attendees) throws BookingConflictException {
-        return createBooking(facilityId, bookingDate, slots, purpose, attendees, false, false);
+                                  String purpose, int attendees, boolean requestExtendedApproval, boolean allowCapacityOverride)
+            throws BookingConflictException {
+        if (bookingDate == null) {
+            throw new InvalidInputException("date", "Booking date cannot be null.");
+        }
+        return createBookingForDates(facilityId, Collections.singletonList(bookingDate), slots, purpose,
+                attendees, requestExtendedApproval, allowCapacityOverride);
     }
 
-    /**
-     * Overloaded createBooking with extended request and capacity override flags.
-     * - Admin can book up to 10 slots and bypass capacity limits.
-     * - Non-admin can submit extended bookings (>3 slots) which are automatically routed to Pending approval.
-     */
-    public List<Booking> createBooking(int facilityId, LocalDate bookingDate, List<Integer> slots,
-                                      String purpose, int attendees, boolean requestExtendedApproval, boolean allowCapacityOverride)
-            throws BookingConflictException {
+    private List<Booking> createBookingForDates(int facilityId, List<LocalDate> dates, List<Integer> slots,
+                                            String purpose, int attendees,
+                                            boolean requestExtendedApproval, boolean allowCapacityOverride)
+        throws BookingConflictException {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null) {
             throw new AccessDeniedException("User must be logged in to create a booking.");
         }
-
         boolean isAdmin = currentUser.getRole() == Role.Admin;
 
-        // BR-02: Date validation
-        validateBookingDate(bookingDate);
+        // BR-02: every date must be valid
+        for (LocalDate d : dates) {
+            validateBookingDate(d);
+        }
 
-        // Slot threshold validation (BR-03 with Extended Request support)
         if (slots == null || slots.isEmpty() || slots.size() > 10) {
             throw new InvalidInputException("slots", "You must select between 1 and 10 slots.");
         }
-
         boolean isExtended = slots.size() > 3;
         if (isExtended && !isAdmin && !requestExtendedApproval) {
             throw new InvalidInputException("slots", "You must select between 1 and 3 slots per booking request (BR-03). For extended bookings (>3 slots), please submit as an Extended Booking Request for Admin approval.");
         }
 
-        // Validate individual slot numbers
         Set<Integer> uniqueSlots = new HashSet<>(slots);
         if (uniqueSlots.size() != slots.size()) {
             throw new InvalidInputException("slots", "Duplicate slots in the same request are not allowed.");
@@ -90,24 +89,24 @@ public class BookingService {
             if (slot < 1 || slot > 10) {
                 throw new InvalidInputException("slots", "Slot number must be between 1 and 10.");
             }
-            // Check if slot in the past today
-            if (bookingDate.isEqual(LocalDate.now())) {
+        }
+        for (LocalDate d : dates) {
+            if (d.isEqual(LocalDate.now())) {
                 int currentSlot = getCurrentSlotNumber();
-                if (slot <= currentSlot) {
-                    throw new InvalidInputException("slots", "Slot " + slot + " has already elapsed today.");
+                for (int slot : slots) {
+                    if (slot <= currentSlot) {
+                        throw new InvalidInputException("slots", "Slot " + slot + " has already elapsed today.");
+                    }
                 }
             }
         }
 
-        // Validate purpose
         if (purpose == null || purpose.trim().isEmpty()) {
             throw new InvalidInputException("purpose", "Booking purpose cannot be empty.");
         }
 
-        // Validate facility
         Facility facility = facilityDAO.findById(facilityId)
                 .orElseThrow(() -> new InvalidInputException("facilityId", "Facility not found."));
-
         if (facility.getStatus() == FacilityStatus.Inactive) {
             throw new InvalidInputException("facility", "Cannot book an inactive facility (BR-08).");
         }
@@ -115,7 +114,6 @@ public class BookingService {
             throw new BookingConflictException("Facility '" + facility.getName() + "' is currently under maintenance (BR-06).");
         }
 
-        // FR-BKG-03: Capacity check with Admin waiver support
         if (attendees <= 0) {
             throw new InvalidInputException("attendees", "Attendees count must be greater than zero.");
         }
@@ -129,7 +127,6 @@ public class BookingService {
             }
         }
 
-        // BR-04: Approval routing
         BookingStatus initialStatus;
         if (isAdmin) {
             initialStatus = BookingStatus.Approved;
@@ -143,38 +140,36 @@ public class BookingService {
                 ? "[Extended Request - " + slots.size() + " hrs] " + purpose.trim()
                 : purpose.trim();
 
-        // Transactional insertion with concurrency locking (Section 7.3)
+        // One transaction for ALL dates and slots: all succeed or none do
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
             try {
                 List<Booking> bookingsToCreate = new ArrayList<>();
-                for (int slotNo : slots) {
-                    // Check scheduled maintenance
-                    if (bookingDAO.isSlotUnderMaintenance(facilityId, bookingDate, slotNo)) {
-                        throw new BookingConflictException(
-                                "Slot " + slotNo + " (" + Booking.formatSlotTime(slotNo) +
-                                ") is under scheduled maintenance (BR-06).",
-                                facilityId, bookingDate.toString(), slotNo);
+                for (LocalDate date : dates) {
+                    for (int slotNo : slots) {
+                        if (bookingDAO.isSlotUnderMaintenance(facilityId, date, slotNo)) {
+                            throw new BookingConflictException(
+                                    "Slot " + slotNo + " (" + Booking.formatSlotTime(slotNo) + ") on " + date +
+                                    " is under scheduled maintenance (BR-06).",
+                                    facilityId, date.toString(), slotNo);
+                        }
+                        Optional<Booking> clashing = bookingDAO.findActiveBookingForUpdate(facilityId, date, slotNo, conn);
+                        if (clashing.isPresent()) {
+                            throw new BookingConflictException(
+                                    "Slot " + slotNo + " (" + Booking.formatSlotTime(slotNo) + ") on " + date +
+                                    " is already booked (BR-01).",
+                                    facilityId, date.toString(), slotNo);
+                        }
+                        Booking b = new Booking(facilityId, currentUser.getUserId(), date, slotNo,
+                                finalPurpose, attendees, initialStatus);
+                        b.setFacilityName(facility.getName());
+                        b.setFacilityBuilding(facility.getBuilding());
+                        b.setFacilityType(facility.getType());
+                        b.setFacilityCapacity(facility.getCapacity());
+                        b.setUsername(currentUser.getUsername());
+                        b.setUserFullName(currentUser.getFullName());
+                        bookingsToCreate.add(b);
                     }
-
-                    // Check clashing active booking with SELECT ... FOR UPDATE (BR-01, Sec 7.3)
-                    Optional<Booking> clashing = bookingDAO.findActiveBookingForUpdate(facilityId, bookingDate, slotNo, conn);
-                    if (clashing.isPresent()) {
-                        throw new BookingConflictException(
-                                "Slot " + slotNo + " (" + Booking.formatSlotTime(slotNo) +
-                                ") is already booked (BR-01).",
-                                facilityId, bookingDate.toString(), slotNo);
-                    }
-
-                    Booking b = new Booking(facilityId, currentUser.getUserId(), bookingDate, slotNo,
-                            finalPurpose, attendees, initialStatus);
-                    b.setFacilityName(facility.getName());
-                    b.setFacilityBuilding(facility.getBuilding());
-                    b.setFacilityType(facility.getType());
-                    b.setFacilityCapacity(facility.getCapacity());
-                    b.setUsername(currentUser.getUsername());
-                    b.setUserFullName(currentUser.getFullName());
-                    bookingsToCreate.add(b);
                 }
 
                 List<Booking> created = bookingDAO.createBookings(bookingsToCreate, conn);
@@ -185,7 +180,6 @@ public class BookingService {
 
             } catch (SQLException e) {
                 conn.rollback();
-                // Check MySQL duplicate key error (error code 1062) on uk_facility_date_slot_active
                 if (e.getErrorCode() == 1062 || e.getMessage().contains("uk_facility_date_slot_active")) {
                     logger.warn("Database unique constraint caught double booking: {}", e.getMessage());
                     throw new BookingConflictException("One of the selected slots was just booked by another user (BR-01).");
@@ -209,11 +203,21 @@ public class BookingService {
         }
     }
 
+        /**
+     * Creates a booking for 1 to 3 slots in a single transaction (BR-01, BR-03, Sec 7.3).
+     * Delegates to the extended overload with no extended-request or capacity-override flags.
+     */
+    public List<Booking> createBooking(int facilityId, LocalDate bookingDate, List<Integer> slots,
+                                      String purpose, int attendees) throws BookingConflictException {
+        return createBooking(facilityId, bookingDate, slots, purpose, attendees, false, false);
+    }
+    
+
     /**
      * Creates bookings across a range of consecutive days (multi-day booking, e.g. 2-day conference).
      */
     public List<Booking> createMultiDayBooking(int facilityId, LocalDate startDate, LocalDate endDate,
-                                              List<Integer> slots, String purpose, int attendees)
+                                          List<Integer> slots, String purpose, int attendees)
             throws BookingConflictException {
         if (startDate == null || endDate == null) {
             throw new InvalidInputException("date", "Start date and end date must be specified.");
@@ -221,14 +225,14 @@ public class BookingService {
         if (endDate.isBefore(startDate)) {
             throw new InvalidInputException("endDate", "End date cannot be earlier than start date.");
         }
-        List<Booking> allCreated = new ArrayList<>();
-        LocalDate cur = startDate;
-        while (!cur.isAfter(endDate)) {
-            List<Booking> dayBookings = createBooking(facilityId, cur, slots, purpose, attendees, true, false);
-            allCreated.addAll(dayBookings);
-            cur = cur.plusDays(1);
+        if (endDate.isAfter(startDate.plusDays(30))) {
+            throw new InvalidInputException("endDate", "A multi-day booking can span at most 31 days.");
         }
-        return allCreated;
+        List<LocalDate> dates = new ArrayList<>();
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            dates.add(d);
+        }
+        return createBookingForDates(facilityId, dates, slots, purpose, attendees, true, false);
     }
 
     /**
@@ -259,7 +263,7 @@ public class BookingService {
             Map<Integer, Booking> slotBookings = bookingDAO.getActiveBookingsForFacilityAndDate(f.getFacilityId(), date);
 
             for (int slot = 1; slot <= 10; slot++) {
-                if (isPast || (isToday && slot < currentSlot)) {
+                if (isPast || (isToday && slot <= currentSlot)) {
                     slotStatuses.put(slot, SlotStatus.PAST);
                 } else if (f.getStatus() == FacilityStatus.Under_Maintenance || bookingDAO.isSlotUnderMaintenance(f.getFacilityId(), date, slot)) {
                     slotStatuses.put(slot, SlotStatus.MAINTENANCE);
@@ -322,24 +326,7 @@ public class BookingService {
             throw new AccessDeniedException("You are not authorized to cancel this booking (BR-05).");
         }
 
-        if (booking.getStatus() == BookingStatus.Cancelled) {
-            throw new InvalidInputException("status", "Booking is already cancelled.");
-        }
-        if (booking.getStatus() == BookingStatus.Completed) {
-            throw new InvalidInputException("status", "Cannot cancel a completed booking.");
-        }
-
-        // BR-05: Cancellation is allowed until the slot starts
-        LocalDate today = LocalDate.now();
-        if (booking.getBookingDate().isBefore(today)) {
-            throw new InvalidInputException("date", "Cannot cancel a past booking.");
-        }
-        if (booking.getBookingDate().isEqual(today)) {
-            int currentSlot = getCurrentSlotNumber();
-            if (booking.getSlotNo() <= currentSlot) {
-                throw new InvalidInputException("slot", "Cancellation is only allowed until the slot starts (BR-05).");
-            }
-        }
+        requireCancellable(booking);
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             boolean success = bookingDAO.cancelBooking(bookingId, conn);
@@ -365,6 +352,11 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.Pending) {
             throw new InvalidInputException("status", "Only Pending bookings can be approved.");
         }
+        LocalDate today = LocalDate.now();
+        if (booking.getBookingDate().isBefore(today)
+            || (booking.getBookingDate().isEqual(today) && booking.getSlotNo() <= getCurrentSlotNumber())) {
+        throw new InvalidInputException("slot", "This booking's slot has already started and can no longer be approved.");
+    }
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             boolean success = bookingDAO.updateStatus(bookingId, BookingStatus.Approved, null, 1, conn);
@@ -420,11 +412,22 @@ public class BookingService {
             throw new AccessDeniedException("You are not authorized to reschedule this booking.");
         }
 
+        requireCancellable(oldBooking);
+
         validateBookingDate(newDate);
 
         if (newSlots == null || newSlots.isEmpty() || newSlots.size() > 3) {
             throw new InvalidInputException("slots", "Reschedule supports between 1 and 3 slots (BR-03).");
         }
+
+        for (int slot : newSlots) {
+            if (slot < 1 || slot > 10) {
+                throw new InvalidInputException("slots", "Slot number must be between 1 and 10.");
+            }
+            if (newDate.isEqual(LocalDate.now()) && slot <= getCurrentSlotNumber()) {
+                throw new InvalidInputException("slots", "Slot " + slot + " has already started today.");
+            }
+        }       
 
         Facility facility = facilityDAO.findById(newFacilityId)
                 .orElseThrow(() -> new InvalidInputException("facilityId", "Target facility not found."));
@@ -443,7 +446,9 @@ public class BookingService {
             conn.setAutoCommit(false);
             try {
                 // 1. Cancel old booking first inside transaction
-                bookingDAO.cancelBooking(oldBookingId, conn);
+                if (!bookingDAO.cancelBooking(oldBookingId, conn)) {
+                    throw new InvalidInputException("bookingId", "The original booking could not be cancelled.");
+                }
 
                 // 2. Validate and reserve new slots
                 List<Booking> newBookings = new ArrayList<>();
@@ -457,14 +462,14 @@ public class BookingService {
                         throw new BookingConflictException("Target slot " + slotNo + " is already booked.", newFacilityId, newDate.toString(), slotNo);
                     }
 
-                    Booking b = new Booking(newFacilityId, currentUser.getUserId(), newDate, slotNo,
+                    Booking b = new Booking(newFacilityId, oldBooking.getUserId(), newDate, slotNo,
                             newPurpose.trim(), newAttendees, newStatus);
                     b.setFacilityName(facility.getName());
                     b.setFacilityBuilding(facility.getBuilding());
                     b.setFacilityType(facility.getType());
                     b.setFacilityCapacity(facility.getCapacity());
-                    b.setUsername(currentUser.getUsername());
-                    b.setUserFullName(currentUser.getFullName());
+                    b.setUsername(oldBooking.getUsername());
+                    b.setUserFullName(oldBooking.getUserFullName());
                     newBookings.add(b);
                 }
 
@@ -506,6 +511,26 @@ public class BookingService {
         }
         if (date.isAfter(today.plusDays(30))) {
             throw new InvalidInputException("date", "Bookings cannot be made more than 30 days in advance (BR-02).");
+        }
+    }
+
+    private void requireCancellable(Booking booking) {
+        BookingStatus s = booking.getStatus();
+        if (s == BookingStatus.Cancelled) {
+            throw new InvalidInputException("status", "Booking is already cancelled.");
+        }
+        if (s == BookingStatus.Completed) {
+            throw new InvalidInputException("status", "Cannot cancel a completed booking.");
+        }
+        if (s == BookingStatus.Rejected) {
+            throw new InvalidInputException("status", "Cannot cancel a rejected booking.");
+        }
+        LocalDate today = LocalDate.now();
+        if (booking.getBookingDate().isBefore(today)) {
+            throw new InvalidInputException("date", "Cannot cancel a past booking.");
+        }
+        if (booking.getBookingDate().isEqual(today) && booking.getSlotNo() <= getCurrentSlotNumber()) {
+            throw new InvalidInputException("slot", "Cancellation is only allowed until the slot starts (BR-05).");
         }
     }
 
