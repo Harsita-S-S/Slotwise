@@ -90,6 +90,29 @@ public class StaffServiceTest {
     }
 
     @Test
+    @DisplayName("FR-STF-01: Admin creates a staff record with a new login account in one step")
+    public void testAddStaffWithNewAccount() throws AuthenticationException {
+        String username = "newstaff_" + System.currentTimeMillis();
+        Staff created = staffService.addStaffWithNewAccount(username, "Staff@1234", "New Staff Member",
+                username + "@fms.edu", StaffSpecialization.Electrician, "+91 9000000001");
+
+        assertNotNull(created);
+        assertEquals(username, created.getUsername());
+        assertTrue(staffService.getStaffByUserId(created.getUserId()).isPresent());
+        assertEquals(Role.Staff, authService.login(username, "Staff@1234").getRole());
+    }
+
+    @Test
+    @DisplayName("FR-STF-01: Invalid staff details do not leave an orphan account")
+    public void testAddStaffWithNewAccountInvalidPhone() {
+        String username = "orphan_" + System.currentTimeMillis();
+        assertThrows(InvalidInputException.class, () ->
+                staffService.addStaffWithNewAccount(username, "Staff@1234", "Orphan Test",
+                        username + "@fms.edu", StaffSpecialization.Plumber, "  "));
+        assertTrue(authService.getAllUsers().stream().noneMatch(u -> u.getUsername().equals(username)));
+    }
+
+    @Test
     @DisplayName("FR-STF-01: Linking non-Staff user accounts or duplicate links is rejected")
     public void testStaffAccountLinkValidation() {
         // Create user with role User (not Staff)

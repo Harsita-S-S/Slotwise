@@ -426,7 +426,7 @@ public class EquipmentDAO implements CrudDAO<Equipment> {
                     item.setEquipmentName(rs.getString("equipment_name"));
                     item.setDescription(rs.getString("description"));
                     item.setPriority(Priority.valueOf(rs.getString("priority")));
-                    item.setStatus(MaintenanceStatus.valueOf(rs.getString("status")));
+                    item.setStatus(MaintenanceStatus.fromDbValue(rs.getString("status")));
                     item.setScheduledDate(rs.getDate("scheduled_date"));
                     item.setCreatedAt(rs.getTimestamp("created_at"));
                     item.setCompletedAt(rs.getTimestamp("completed_at"));

@@ -311,7 +311,7 @@ public class StaffDAO implements CrudDAO<Staff> {
 
                     task.setDescription(rs.getString("description"));
                     task.setPriority(Priority.valueOf(rs.getString("priority")));
-                    task.setStatus(MaintenanceStatus.valueOf(rs.getString("status")));
+                    task.setStatus(MaintenanceStatus.fromDbValue(rs.getString("status")));
                     task.setScheduledDate(rs.getDate("scheduled_date"));
                     task.setCreatedAt(rs.getTimestamp("created_at"));
 
