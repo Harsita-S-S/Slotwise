@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.fms.controller.UserController" spacing="16">
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="User Management"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Label text="Create accounts, deactivate users and reset passwords" styleClass="card-subtitle" />
+        </VBox>
+        <Button text="+ Add User" styleClass="btn-primary" onAction="#handleAddUser" />
+    </HBox>
+
+    <VBox styleClass="card" spacing="12">
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <TextField fx:id="searchField" promptText="Search name, username or email..."
+                       styleClass="text-field" prefWidth="300" HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="roleFilter" prefWidth="140" styleClass="combo-box" />
+            <ComboBox fx:id="statusFilter" prefWidth="140" styleClass="combo-box" />
+            <Button text="Reset" styleClass="btn-secondary" onAction="#handleResetFilters" />
+        </HBox>
+        <TableView fx:id="userTable" styleClass="table-view" prefHeight="450">
+            <columns>
+                <TableColumn fx:id="colName" text="Full Name" prefWidth="190" />
+                <TableColumn fx:id="colUsername" text="Username" prefWidth="140" />
+                <TableColumn fx:id="colEmail" text="Email" prefWidth="220" />
+                <TableColumn fx:id="colRole" text="Role" prefWidth="90" />
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="100" />
+                <TableColumn fx:id="colActions" text="Actions" prefWidth="260" />
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

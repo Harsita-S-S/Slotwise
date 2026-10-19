@@ -244,7 +244,7 @@ public class DashboardController {
     private void handleNavUsers() {
         SessionManager.getInstance().requireRole(Role.Admin);
         setActiveNavButton(navUsers);
-        showEmptyView("User Management", "This module has not been implemented yet.");
+        loadView("/com/fms/view/users.fxml");
         logger.info("Navigated to: User Management");
     }
 

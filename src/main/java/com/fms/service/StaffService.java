@@ -25,6 +25,7 @@ public class StaffService {
 
     private final StaffDAO staffDAO;
     private final UserDAO userDAO;
+    private final AuthService authService = new AuthService();
 
     public StaffService() {
         this.staffDAO = new StaffDAO();
@@ -79,6 +80,30 @@ public class StaffService {
         return saved;
     }
 
+    /**
+ * Creates a new Staff-role login account and its staff record in one step (FR-STF-01).
+ * Staff details are validated first so bad input never leaves an orphan account;
+ * if the staff insert still fails, the new account is deactivated again.
+ */
+    public Staff addStaffWithNewAccount(String username, String password, String fullName, String email,
+                                    StaffSpecialization specialization, String phone) {
+        SessionManager.getInstance().requireRole(Role.Admin);
+        validateStaffInput(specialization, phone);
+
+        User account;
+        try {
+            account = authService.createUser(username, password, Role.Staff, fullName, email);
+        } catch (IllegalArgumentException e) { // duplicate username or email
+            throw new InvalidInputException(e.getMessage());
+        }
+
+        try {
+            return addStaff(account.getUserId(), specialization, phone);
+        } catch (RuntimeException e) {
+            authService.deactivateUser(account.getUserId()); // don't leave a usable orphan account
+            throw e;
+        }
+    }
     // ---------------------------------------------------------------
     // 2. Edit Staff Record (FR-STF-01)
     // ---------------------------------------------------------------

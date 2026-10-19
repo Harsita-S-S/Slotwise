@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import com.fms.exception.InvalidInputException;
 
 /**
  * Service layer for authentication and user management.
@@ -146,6 +147,27 @@ public class AuthService {
     public User createUser(String username, String password, Role role,
                            String fullName, String email) {
 
+        SessionManager.getInstance().requireRole(Role.Admin); // FR-AUTH-05
+
+        if (username == null || !username.trim().matches("[A-Za-z0-9._]{3,30}")) {
+            throw new InvalidInputException("username", "Username must be 3-30 characters: letters, digits, dot or underscore.");
+        }
+        if (password == null || password.length() < 8) {
+            throw new InvalidInputException("password", "Password must be at least 8 characters.");
+        }
+        if (role == null) {
+            throw new InvalidInputException("role", "Role is required.");
+        }
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new InvalidInputException("fullName", "Full name is required.");
+        }
+        if (email == null || !email.trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            throw new InvalidInputException("email", "Enter a valid email address.");
+        }
+        username = username.trim();
+        fullName = fullName.trim();
+        email = email.trim();
+
         // Validate that username is not already taken
         if (userDAO.isUsernameTaken(username)) {
             throw new IllegalArgumentException("Username '" + username + "' is already taken.");
@@ -175,6 +197,21 @@ public class AuthService {
      * @return true if the deactivation succeeded
      */
     public boolean deactivateUser(int userId) {
+        SessionManager.getInstance().requireRole(Role.Admin);
+
+        User current = SessionManager.getInstance().getCurrentUser();
+        if (current != null && current.getUserId() == userId) {
+            throw new InvalidInputException("user", "You cannot deactivate your own account.");
+        }
+        Optional<User> target = userDAO.findById(userId);
+        if (target.isPresent() && target.get().getRole() == Role.Admin && target.get().isActive()) {
+            long activeAdmins = userDAO.findAll().stream()
+                    .filter(u -> u.getRole() == Role.Admin && u.isActive()).count();
+            if (activeAdmins <= 1) {
+                throw new InvalidInputException("user", "Cannot deactivate the last active Admin.");
+            }
+        }
+
         boolean success = userDAO.delete(userId);
         if (success) {
             logger.info("Admin deactivated user ID: {}", userId);
@@ -182,6 +219,17 @@ public class AuthService {
         return success;
     }
 
+    public boolean reactivateUser(int userId) {
+        SessionManager.getInstance().requireRole(Role.Admin);
+        User user = userDAO.findById(userId)
+                .orElseThrow(() -> new InvalidInputException("user", "User not found."));
+        user.setActive(true);
+        boolean success = userDAO.update(user);
+        if (success) {
+            logger.info("Admin reactivated user ID: {}", userId);
+        }
+        return success;
+    }
     /**
      * Resets a user's password (Admin only - FR-AUTH-06).
      * Also clears any lockout on the account.
@@ -191,6 +239,10 @@ public class AuthService {
      * @return true if the reset succeeded
      */
     public boolean resetPassword(int userId, String newPassword) {
+        SessionManager.getInstance().requireRole(Role.Admin);
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new InvalidInputException("password", "Password must be at least 8 characters.");
+        }
         String hashedPassword = PasswordUtil.hashPassword(newPassword);
         boolean passwordUpdated = userDAO.updatePassword(userId, hashedPassword);
 
@@ -212,6 +264,7 @@ public class AuthService {
      * @return List of all users
      */
     public List<User> getAllUsers() {
+        SessionManager.getInstance().requireRole(Role.Admin);
         return userDAO.findAll();
     }
 

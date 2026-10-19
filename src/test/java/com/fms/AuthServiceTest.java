@@ -92,7 +92,7 @@ public class AuthServiceTest {
         assertTrue(session.isLoggedIn(), "Session should indicate user is logged in");
         assertEquals("admin", session.getCurrentUser().getUsername());
         assertEquals(Role.Admin, session.getCurrentRole());
-        assertEquals("System Administrator", session.getCurrentUserDisplayName());
+        assertEquals(user.getFullName(), session.getCurrentUserDisplayName());
 
         session.logout();
         assertFalse(session.isLoggedIn(), "Session should be empty after logout");
@@ -132,6 +132,7 @@ public class AuthServiceTest {
     @Test
     @DisplayName("FR-AUTH-06: Admin user creation, deactivation, and password reset")
     public void testAdminUserManagement() throws AuthenticationException {
+        SessionManager.getInstance().setCurrentUser(authService.login("admin", "Admin@123"));
         String testUsername = "temp_user_" + System.currentTimeMillis();
         String testEmail = testUsername + "@example.com";
         String initialPassword = "Initial@Pass123";
@@ -179,7 +180,9 @@ public class AuthServiceTest {
 
     @Test
     @DisplayName("FR-AUTH-07 / BR-11: Temporary lockout after 5 consecutive failed login attempts")
-    public void testAccountLockoutAfterFiveFailedAttempts() {
+    public void testAccountLockoutAfterFiveFailedAttempts() throws AuthenticationException {
+        SessionManager.getInstance().setCurrentUser(authService.login("admin", "Admin@123"));
+
         String lockTestUser = "lock_test_" + System.currentTimeMillis();
         String lockTestEmail = lockTestUser + "@example.com";
         String correctPass = "Correct@Pass123";

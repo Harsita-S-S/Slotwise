@@ -7,6 +7,7 @@ import com.fms.service.AuthService;
 import com.fms.service.SessionManager;
 import com.fms.service.StaffService;
 import com.fms.util.DBConnection;
+import com.fms.exception.AuthenticationException;
 import com.fms.util.DatabaseInitializer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

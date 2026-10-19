@@ -438,6 +438,12 @@ public class StaffController {
             Label dialogErrorLabel = (Label) root.lookup("#dialogErrorLabel");
             Button cancelButton = (Button) root.lookup("#cancelButton");
             Button saveButton = (Button) root.lookup("#saveButton");
+            CheckBox newAccountCheck = (CheckBox) root.lookup("#newAccountCheck");
+            VBox newAccountBox = (VBox) root.lookup("#newAccountBox");
+            TextField newFullNameField = (TextField) root.lookup("#newFullNameField");
+            TextField newUsernameField = (TextField) root.lookup("#newUsernameField");
+            TextField newEmailField = (TextField) root.lookup("#newEmailField");
+            PasswordField newPasswordField = (PasswordField) root.lookup("#newPasswordField");
 
             // Populate specialization dropdown
             specializationCombo.getItems().setAll(StaffSpecialization.values());
@@ -476,14 +482,21 @@ public class StaffController {
                     }
                 });
 
+
+
+                newAccountCheck.selectedProperty().addListener((obs, was, selected) -> {
+                    userAccountCombo.setVisible(!selected);
+                    userAccountCombo.setManaged(!selected);
+                    newAccountBox.setVisible(selected);
+                    newAccountBox.setManaged(selected);
+                });
                 if (unassigned.isEmpty()) {
-                    dialogErrorLabel.setText("No unassigned staff user accounts found. Create a user with Staff role in User Management first.");
-                    dialogErrorLabel.setVisible(true);
-                    dialogErrorLabel.setManaged(true);
-                    saveButton.setDisable(true);
+                    newAccountCheck.setSelected(true); // nothing to link, so go straight to creating an account
                 }
             } else {
                 // Edit mode
+                newAccountCheck.setVisible(false);
+                newAccountCheck.setManaged(false);
                 dialogTitle.setText("Edit Staff Record - " + existingStaff.getFullName());
                 userAccountCombo.setVisible(false);
                 userAccountCombo.setManaged(false);
@@ -512,11 +525,16 @@ public class StaffController {
 
                 try {
                     if (existingStaff == null) {
-                        User selectedUser = userAccountCombo.getValue();
-                        if (selectedUser == null) {
-                            throw new InvalidInputException("userId", "Please select a user account to link.");
+                        if (newAccountCheck.isSelected()) {
+                            staffService.addStaffWithNewAccount(newUsernameField.getText(), newPasswordField.getText(),
+                                    newFullNameField.getText(), newEmailField.getText(), chosenSpec, phone);
+                        } else {
+                            User selectedUser = userAccountCombo.getValue();
+                            if (selectedUser == null) {
+                                throw new InvalidInputException("userId", "Please select a user account to link.");
+                            }
+                            staffService.addStaff(selectedUser.getUserId(), chosenSpec, phone);
                         }
-                        staffService.addStaff(selectedUser.getUserId(), chosenSpec, phone);
                     } else {
                         boolean isActive = activeCheckBox.isSelected();
                         staffService.updateStaff(existingStaff.getStaffId(), chosenSpec, phone, isActive);

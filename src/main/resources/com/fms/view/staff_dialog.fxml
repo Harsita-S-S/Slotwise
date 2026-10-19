@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.PasswordField?>
 
 <!--
   SlotWise Add/Edit Staff Dialog (FR-STF-01, FR-STF-02)
@@ -39,6 +40,14 @@
                       maxWidth="Infinity" styleClass="combo-box" />
             <Label fx:id="editingUserLabel" text="User Name" style="-fx-font-weight: bold; -fx-text-fill: #4A3E3D;"
                    visible="false" managed="false" />
+            <CheckBox fx:id="newAccountCheck" text="Create a new Staff login account instead"
+                    style="-fx-text-fill: #4A3E3D; -fx-font-size: 12px;" />
+            <VBox fx:id="newAccountBox" spacing="8" visible="false" managed="false">
+                <TextField fx:id="newFullNameField" promptText="Full name" styleClass="text-field" />
+                <TextField fx:id="newUsernameField" promptText="Username (letters, digits, . _)" styleClass="text-field" />
+                <TextField fx:id="newEmailField" promptText="Email" styleClass="text-field" />
+                <PasswordField fx:id="newPasswordField" promptText="Temporary password (min 8 characters)" styleClass="text-field" />
+            </VBox>
         </VBox>
 
         <!-- Trade Specialization (FR-STF-02) -->
