@@ -158,7 +158,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notif_user FOREIGN KEY (user_id) 
         REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_notif_user_read (user_id, is_read)
+    INDEX idx_notif_user_read (user_id, is_read),
+    -- FR-NOT-06: one notification per user per event (NULL ref_key is never a duplicate)
+    UNIQUE KEY uk_notif_user_ref (user_id, ref_key)
 ) ENGINE=InnoDB;
 
 -- 10. Audit Log Table (Stretch Goal - Section 5.1)

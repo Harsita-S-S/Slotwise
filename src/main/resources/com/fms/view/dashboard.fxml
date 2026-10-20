@@ -53,6 +53,14 @@
                         styleClass="sidebar-btn" maxWidth="Infinity"
                         onAction="#handleNavBookings" />
 
+                <Button fx:id="navNotifications" text="  🔔   Notifications"
+                        styleClass="sidebar-btn" maxWidth="Infinity" contentDisplay="RIGHT" graphicTextGap="8"
+                        onAction="#handleNavNotifications">
+                    <graphic>
+                        <Label fx:id="notifBadge" text="0" styleClass="notif-badge" visible="false" managed="false" />
+                    </graphic>
+                </Button>
+
                 <Button fx:id="navMaintenance" text="  🔧   Maintenance"
                         styleClass="sidebar-btn" maxWidth="Infinity"
                         onAction="#handleNavMaintenance" />

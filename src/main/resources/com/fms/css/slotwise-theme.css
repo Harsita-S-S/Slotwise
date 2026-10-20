@@ -1063,3 +1063,57 @@
 }
 
 
+
+/* ----------------------------------------------------------------
+ * NOTIFICATIONS (FR-NOT-04)
+ * ---------------------------------------------------------------- */
+.notif-badge {
+    -fx-background-color: #D97757;
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 6;
+    -fx-background-radius: 10;
+}
+
+.notif-row, .notif-row-unread {
+    -fx-padding: 12 10;
+}
+
+.notif-row-unread {
+    -fx-background-color: rgba(217, 119, 87, 0.07);
+    -fx-background-radius: 6;
+}
+
+.notif-icon {
+    -fx-font-size: 18px;
+    -fx-text-fill: #D97757;
+    -fx-min-width: 28;
+    -fx-alignment: CENTER;
+}
+
+.notif-title {
+    -fx-font-size: 13px;
+    -fx-text-fill: #7A6B66;
+}
+
+.notif-title-unread {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A3E3D;
+}
+
+.notif-dot {
+    -fx-font-size: 9px;
+    -fx-text-fill: #D97757;
+}
+
+.notif-message {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4A3E3D;
+}
+
+.notif-cell, .notif-cell:odd, .notif-cell:even, .notif-cell:filled:selected {
+    -fx-background-color: transparent;
+    -fx-padding: 2 0;
+}

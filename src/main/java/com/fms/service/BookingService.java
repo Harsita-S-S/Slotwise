@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -26,6 +27,17 @@ public class BookingService {
 
     private final BookingDAO bookingDAO;
     private final FacilityDAO facilityDAO;
+
+    private final NotificationService notificationService = new NotificationService();
+
+    private static final DateTimeFormatter NOTIFICATION_DATE = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    private static final List<BookingStatus> CANCELLABLE = List.of(BookingStatus.Pending, BookingStatus.Approved);
+
+    /** e.g. "Room 101 on 12 Nov 2026 (09:00 - 10:00)" for notification messages. */
+    private static String describe(Booking b) {
+        return b.getFacilityName() + " on " + b.getBookingDate().format(NOTIFICATION_DATE)
+                + " (" + Booking.formatSlotTime(b.getSlotNo()) + ")";
+    }
 
     public BookingService() {
         this.bookingDAO = new BookingDAO();
@@ -329,11 +341,25 @@ public class BookingService {
         requireCancellable(booking);
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
-            boolean success = bookingDAO.cancelBooking(bookingId, conn);
-            if (success) {
-                logger.info("Booking ID {} cancelled by user '{}'", bookingId, currentUser.getUsername());
+            conn.setAutoCommit(false);
+            try {
+                boolean success = bookingDAO.updateStatusIf(
+                        bookingId, CANCELLABLE, BookingStatus.Cancelled, null, null, conn);
+                // FR-NOT-03: tell the owner when someone else (an Admin, per BR-05) cancels their booking
+                if (success && booking.getUserId() != currentUser.getUserId()) {
+                    notificationService.notifyUser(conn, booking.getUserId(), NotificationType.BOOKING_CANCELLED,
+                            "Your booking for " + describe(booking) + " was cancelled by an administrator.",
+                            "BOOKING_CANCELLED:" + bookingId);
+                }
+                conn.commit();
+                if (success) {
+                    logger.info("Booking ID {} cancelled by user '{}'", bookingId, currentUser.getUsername());
+                }
+                return success;
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                throw e;
             }
-            return success;
         } catch (SQLException e) {
             logger.error("Error cancelling booking ID {}: {}", bookingId, e.getMessage(), e);
             throw new RuntimeException("Database error during cancellation", e);
@@ -359,11 +385,24 @@ public class BookingService {
     }
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
-            boolean success = bookingDAO.updateStatus(bookingId, BookingStatus.Approved, null, 1, conn);
-            if (success) {
-                logger.info("Admin approved booking ID {}", bookingId);
+            conn.setAutoCommit(false);
+            try {
+                boolean success = bookingDAO.updateStatusIf(
+                        bookingId, List.of(BookingStatus.Pending), BookingStatus.Approved, null, 1, conn);
+                if (success) {
+                    notificationService.notifyUser(conn, booking.getUserId(), NotificationType.BOOKING_APPROVED,
+                            "Your booking for " + describe(booking) + " has been approved.",
+                            "BOOKING_APPROVED:" + bookingId);
+                }
+                conn.commit();
+                if (success) {
+                    logger.info("Admin approved booking ID {}", bookingId);
+                }
+                return success;
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                throw e;
             }
-            return success;
         } catch (SQLException e) {
             logger.error("Error approving booking ID {}: {}", bookingId, e.getMessage(), e);
             throw new RuntimeException("Database error during approval", e);
@@ -384,11 +423,25 @@ public class BookingService {
         }
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
-            boolean success = bookingDAO.updateStatus(bookingId, BookingStatus.Rejected, reason, null, conn);
-            if (success) {
-                logger.info("Admin rejected booking ID {} with reason: '{}'", bookingId, reason);
+            conn.setAutoCommit(false);
+            try {
+                boolean success = bookingDAO.updateStatusIf(
+                        bookingId, List.of(BookingStatus.Pending), BookingStatus.Rejected, reason, null, conn);
+                if (success) {
+                    String why = (reason == null || reason.isBlank()) ? "" : " Reason: " + reason.trim();
+                    notificationService.notifyUser(conn, booking.getUserId(), NotificationType.BOOKING_REJECTED,
+                            "Your booking for " + describe(booking) + " was rejected." + why,
+                            "BOOKING_REJECTED:" + bookingId);
+                }
+                conn.commit();
+                if (success) {
+                    logger.info("Admin rejected booking ID {} with reason: '{}'", bookingId, reason);
+                }
+                return success;
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                throw e;
             }
-            return success;
         } catch (SQLException e) {
             logger.error("Error rejecting booking ID {}: {}", bookingId, e.getMessage(), e);
             throw new RuntimeException("Database error during rejection", e);

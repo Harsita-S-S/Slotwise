@@ -17,6 +17,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -282,6 +283,36 @@ public class BookingDAO {
                 pstmt.setNull(3, Types.TINYINT);
             }
             pstmt.setInt(4, bookingId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Like {@link #updateStatus}, but only changes the booking if it is still in one of the allowed current
+     * statuses. Returns false when another action got there first, so an event (and its notification)
+     * is never applied twice.
+     */
+    public boolean updateStatusIf(int bookingId, Collection<BookingStatus> allowedCurrent, BookingStatus newStatus,
+                                  String rejectionReason, Integer activeFlag, Connection conn) throws SQLException {
+        if (allowedCurrent == null || allowedCurrent.isEmpty()) {
+            return false;
+        }
+        String placeholders = String.join(", ", java.util.Collections.nCopies(allowedCurrent.size(), "?"));
+        String sql = "UPDATE bookings SET status = ?, rejection_reason = ?, active_flag = ? " +
+                     "WHERE booking_id = ? AND status IN (" + placeholders + ")";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newStatus.name());
+            pstmt.setString(2, rejectionReason);
+            if (activeFlag != null) {
+                pstmt.setInt(3, activeFlag);
+            } else {
+                pstmt.setNull(3, Types.TINYINT);
+            }
+            pstmt.setInt(4, bookingId);
+            int i = 5;
+            for (BookingStatus s : allowedCurrent) {
+                pstmt.setString(i++, s.name());
+            }
             return pstmt.executeUpdate() > 0;
         }
     }

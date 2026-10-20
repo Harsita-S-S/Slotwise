@@ -3,6 +3,7 @@ package com.fms.controller;
 import com.fms.dao.BookingDAO;
 import com.fms.dao.FacilityDAO;
 import com.fms.model.Role;
+import com.fms.service.NotificationService;
 import com.fms.service.SessionManager;
 import com.fms.view.SlotWiseApp;
 import javafx.fxml.FXML;
@@ -40,6 +41,8 @@ public class DashboardController {
     @FXML private Button navStaff;
     @FXML private Button navUsers;
     @FXML private Button navReports;
+    @FXML private Button navNotifications;
+    @FXML private Label notifBadge;
     @FXML private Button logoutButton;
 
     // Main content area
@@ -54,6 +57,7 @@ public class DashboardController {
 
     private final FacilityDAO facilityDAO = new FacilityDAO();
     private final BookingDAO bookingDAO = new BookingDAO();
+    private final NotificationService notificationService = new NotificationService();
 
     private java.util.List<javafx.scene.Node> defaultDashboardNodes;
 
@@ -86,6 +90,9 @@ public class DashboardController {
 
         // Populate live stat counters
         refreshDashboardStats();
+
+        // Unread notification badge in the sidebar (FR-NOT-04)
+        refreshUnreadBadge();
     }
 
     /**
@@ -179,11 +186,19 @@ public class DashboardController {
     }
 
     private void loadView(String fxmlPath) {
+        loadView(fxmlPath, null);
+    }
+
+    /** Loads a view into the content area; the optional configurer receives the view's controller. */
+    private void loadView(String fxmlPath, java.util.function.Consumer<Object> controllerConfigurer) {
         try {
             java.net.URL fxmlUrl = getClass().getResource(fxmlPath);
             if (fxmlUrl != null) {
                 javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
                 javafx.scene.Parent view = loader.load();
+                if (controllerConfigurer != null) {
+                    controllerConfigurer.accept(loader.getController());
+                }
                 contentArea.getChildren().setAll(view);
             } else {
                 logger.error("FXML file not found: {}", fxmlPath);
@@ -217,6 +232,30 @@ public class DashboardController {
         setActiveNavButton(navBookings);
         loadView("/com/fms/view/bookings.fxml");
         logger.info("Navigated to: Bookings");
+    }
+
+    @FXML
+    private void handleNavNotifications() {
+        setActiveNavButton(navNotifications);
+        loadView("/com/fms/view/notifications.fxml",
+                controller -> ((NotificationController) controller).setOnChange(this::refreshUnreadBadge));
+        logger.info("Navigated to: Notifications");
+    }
+
+    /** Updates the unread-count badge on the Notifications button (hidden when there is nothing unread). */
+    public void refreshUnreadBadge() {
+        if (notifBadge == null) {
+            return;
+        }
+        int unread = 0;
+        try {
+            unread = notificationService.getMyUnreadCount();
+        } catch (Exception e) {
+            logger.warn("Could not refresh unread notification count: {}", e.getMessage());
+        }
+        notifBadge.setText(unread > 99 ? "99+" : String.valueOf(unread));
+        notifBadge.setVisible(unread > 0);
+        notifBadge.setManaged(unread > 0);
     }
 
     @FXML
@@ -283,7 +322,7 @@ public class DashboardController {
         // List all nav buttons
         Button[] allNavButtons = {
             navDashboard, navFacilities, navBookings,
-            navMaintenance, navEquipment, navStaff, navUsers, navReports
+            navMaintenance, navNotifications, navEquipment, navStaff, navUsers, navReports
         };
 
         // Remove active style from all buttons
@@ -296,5 +335,8 @@ public class DashboardController {
 
         // Add active style to the selected button
         activeButton.getStyleClass().add("sidebar-btn-active");
+
+        // Keep the badge current whenever the user navigates
+        refreshUnreadBadge();
     }
 }

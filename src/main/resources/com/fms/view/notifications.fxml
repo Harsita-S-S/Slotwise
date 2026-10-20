@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.fms.controller.NotificationController" spacing="16">
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="Notifications"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;" />
+            <Label fx:id="summaryLabel" text="Loading..." styleClass="card-subtitle" />
+        </VBox>
+        <CheckBox fx:id="unreadOnlyCheck" text="Unread only" onAction="#handleUnreadOnlyToggle" />
+        <Button text="Refresh" styleClass="btn-secondary" onAction="#handleRefresh" />
+        <Button fx:id="markAllReadButton" text="Mark all as read" styleClass="btn-primary"
+                onAction="#handleMarkAllRead" />
+    </HBox>
+
+    <VBox styleClass="card" spacing="0">
+        <ListView fx:id="notificationList" prefHeight="520" VBox.vgrow="ALWAYS" />
+    </VBox>
+</VBox>

@@ -35,6 +35,15 @@ public class ViewLoadTest {
     }
 
     @Test
+    public void testLoadNotificationsFxml() throws Exception {
+        URL url = getClass().getResource("/com/fms/view/notifications.fxml");
+        assertNotNull(url, "notifications.fxml not found");
+        FXMLLoader loader = new FXMLLoader(url);
+        Object root = loader.load();
+        assertNotNull(root, "notifications root should not be null");
+    }
+
+    @Test
     public void testLoadDashboardFxml() throws Exception {
         URL url = getClass().getResource("/com/fms/view/dashboard.fxml");
         assertNotNull(url, "dashboard.fxml not found");

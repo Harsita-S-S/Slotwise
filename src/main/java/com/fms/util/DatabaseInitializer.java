@@ -24,6 +24,7 @@ public class DatabaseInitializer {
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             executeSchemaScript(conn);
             migrateBookingsTable(conn);
+            migrateNotificationsTable(conn);
             seedTimeSlots(conn);
 
             // If database has no users, seed the complete rich dataset
@@ -67,6 +68,7 @@ public class DatabaseInitializer {
 
             executeSchemaScript(conn);
             migrateBookingsTable(conn);
+            migrateNotificationsTable(conn);
             seedTimeSlots(conn);
 
             Map<String, Integer> userIds = seedUsersAndStaffRich(conn);
@@ -117,6 +119,19 @@ public class DatabaseInitializer {
                 }
             }
             logger.info("Executed schema.sql successfully.");
+        }
+    }
+
+    /** FR-NOT-06: adds the (user_id, ref_key) unique key to databases created before it existed. */
+    private static void migrateNotificationsTable(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("ALTER TABLE notifications ADD UNIQUE KEY uk_notif_user_ref (user_id, ref_key)");
+        } catch (SQLException e) {
+            // 1061 = key already exists (normal). Anything else (e.g. 1062 duplicate rows) is worth a warning;
+            // NotificationDAO still de-duplicates with a check-then-insert in that case.
+            if (e.getErrorCode() != 1061) {
+                logger.warn("Could not add unique key to notifications: {}", e.getMessage());
+            }
         }
     }
 
