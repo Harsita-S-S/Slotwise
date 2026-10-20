@@ -222,7 +222,7 @@ public class DashboardController {
     @FXML
     private void handleNavMaintenance() {
         setActiveNavButton(navMaintenance);
-        showEmptyView("Maintenance", "This module has not been implemented yet.");
+        loadView("/com/fms/view/maintenance.fxml");
         logger.info("Navigated to: Maintenance");
     }
 

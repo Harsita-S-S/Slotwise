@@ -1,0 +1,172 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="16"
+      style="-fx-padding: 24;"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.fms.controller.MaintenanceController">
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Maintenance Management"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A3E3D;"/>
+            <Label text="Raise requests, schedule repairs, and track maintenance progress."
+                   styleClass="card-subtitle"/>
+        </VBox>
+        <Button text="Refresh" onAction="#handleRefresh"
+                styleClass="btn-secondary"/>
+    </HBox>
+
+    <VBox spacing="12" styleClass="card">
+        <Label text="Raise a Maintenance Request"
+               style="-fx-font-size: 17px; -fx-font-weight: bold;"/>
+
+        <GridPane hgap="12" vgap="10">
+            <columnConstraints>
+                <ColumnConstraints minWidth="110"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <Label text="Facility" GridPane.rowIndex="0"/>
+            <ComboBox fx:id="facilityCombo"
+                      promptText="Select facility"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="0"/>
+
+            <Label text="Equipment" GridPane.rowIndex="1"/>
+            <ComboBox fx:id="equipmentCombo"
+                      promptText="Optional — select equipment"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="1"/>
+
+            <Label text="Priority" GridPane.rowIndex="2"/>
+            <ComboBox fx:id="priorityCombo"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="2"/>
+
+            <Label text="Description" GridPane.rowIndex="3"/>
+            <TextArea fx:id="descriptionArea"
+                      promptText="Describe the issue..."
+                      prefRowCount="3"
+                      wrapText="true"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="3"/>
+        </GridPane>
+
+        <Button fx:id="raiseButton"
+                text="Submit Maintenance Request"
+                onAction="#handleRaiseRequest"
+                styleClass="btn-primary"/>
+    </VBox>
+
+    <VBox spacing="10" styleClass="card">
+        <Label text="Maintenance Requests"
+               style="-fx-font-size: 17px; -fx-font-weight: bold;"/>
+
+        <Label text="Select a row below to assign a task or update its status."
+               styleClass="card-subtitle"/>
+
+        <TableView fx:id="requestTable" prefHeight="260"
+                   VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="45"/>
+                <TableColumn fx:id="colFacility" text="Facility" prefWidth="120"/>
+                <TableColumn fx:id="colEquipment" text="Equipment" prefWidth="120"/>
+                <TableColumn fx:id="colDescription" text="Description" prefWidth="180"/>
+                <TableColumn fx:id="colPriority" text="Priority" prefWidth="75"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="90"/>
+                <TableColumn fx:id="colRaisedBy" text="Raised By" prefWidth="110"/>
+                <TableColumn fx:id="colAssigned" text="Assigned Staff" prefWidth="110"/>
+                <TableColumn fx:id="colScheduled" text="Scheduled" prefWidth="100"/>
+                <TableColumn fx:id="colNote" text="Latest Note" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </VBox>
+
+    <VBox fx:id="adminPanel" spacing="12" styleClass="card">
+        <Label text="Admin — Assign and Schedule"
+               style="-fx-font-size: 17px; -fx-font-weight: bold;"/>
+
+        <GridPane hgap="12" vgap="10">
+            <columnConstraints>
+                <ColumnConstraints minWidth="110"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <Label text="Active Staff" GridPane.rowIndex="0"/>
+            <ComboBox fx:id="staffCombo"
+                      promptText="Select Staff member"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="0"/>
+
+            <Label text="Scheduled Date" GridPane.rowIndex="1"/>
+            <DatePicker fx:id="scheduledDatePicker"
+                        maxWidth="Infinity"
+                        GridPane.columnIndex="1"
+                        GridPane.rowIndex="1"/>
+
+            <Label text="Start Slot" GridPane.rowIndex="2"/>
+            <ComboBox fx:id="startSlotCombo"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="2"/>
+
+            <Label text="End Slot" GridPane.rowIndex="3"/>
+            <ComboBox fx:id="endSlotCombo"
+                      maxWidth="Infinity"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="3"/>
+
+            <Label text="Assignment Note" GridPane.rowIndex="4"/>
+            <TextField fx:id="assignmentNoteField"
+                       promptText="Optional note"
+                       GridPane.columnIndex="1"
+                       GridPane.rowIndex="4"/>
+        </GridPane>
+
+        <Button fx:id="assignButton"
+                text="Assign Selected Request"
+                onAction="#handleAssignRequest"
+                styleClass="btn-primary"/>
+    </VBox>
+
+    <VBox fx:id="staffPanel" spacing="12" styleClass="card">
+        <Label text="Work on a Maintenance Task"
+               style="-fx-font-size: 17px; -fx-font-weight: bold;"/>
+
+        <Label text="Select an assigned task. Start work first, then enter completion notes when the task is finished."
+               wrapText="true"
+               styleClass="card-subtitle"/>
+
+        <TextField fx:id="completionNoteField"
+                   promptText="Completion notes (required to complete a task)"/>
+
+        <HBox spacing="10">
+            <Button fx:id="startButton"
+                    text="Start Work"
+                    onAction="#handleStartWork"
+                    styleClass="btn-primary"/>
+
+            <Button fx:id="completeButton"
+                    text="Complete Task"
+                    onAction="#handleCompleteWork"
+                    styleClass="btn-secondary"/>
+        </HBox>
+    </VBox>
+
+    <Label fx:id="messageLabel"
+           wrapText="true"
+           style="-fx-font-size: 13px; -fx-text-fill: #356859;"/>
+
+    <padding>
+        <Insets top="4" right="4" bottom="4" left="4"/>
+    </padding>
+</VBox>
