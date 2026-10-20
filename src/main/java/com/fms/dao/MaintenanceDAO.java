@@ -6,6 +6,9 @@ import com.fms.model.MaintenanceRequest;
 import com.fms.model.MaintenanceStatus;
 import com.fms.model.Priority;
 import com.fms.util.DBConnection;
+import com.fms.exception.InvalidInputException;
+import com.fms.exception.InvalidStatusTransitionException;
+import com.fms.model.MaintenanceLogEntry;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -120,7 +123,8 @@ public class MaintenanceDAO {
 
                         try (ResultSet rs = ps.executeQuery()) {
                             if (!rs.next()) {
-                                throw new SQLException(
+                                throw new InvalidInputException(
+                                    "equipment",
                                     "The selected equipment does not belong " +
                                     "to the selected facility."
                                 );
@@ -245,6 +249,52 @@ public class MaintenanceDAO {
         );
     }
 
+    /**
+     * Status history of one request, oldest first (FR-MNT-03, FR-MNT-05).
+     */
+    public List<MaintenanceLogEntry> findLog(int requestId)
+            throws DatabaseException {
+
+        String sql =
+            "SELECT l.log_id, l.request_id, l.old_status, l.new_status, " +
+            "l.changed_by, u.full_name AS changed_by_name, " +
+            "l.changed_at, l.note " +
+            "FROM maintenance_log l " +
+            "JOIN users u ON u.user_id = l.changed_by " +
+            "WHERE l.request_id = ? " +
+            "ORDER BY l.changed_at, l.log_id";
+
+        List<MaintenanceLogEntry> entries = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, requestId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MaintenanceLogEntry entry = new MaintenanceLogEntry();
+                    entry.setLogId(rs.getInt("log_id"));
+                    entry.setRequestId(rs.getInt("request_id"));
+                    entry.setOldStatus(rs.getString("old_status"));
+                    entry.setNewStatus(rs.getString("new_status"));
+                    entry.setChangedBy(rs.getInt("changed_by"));
+                    entry.setChangedByName(rs.getString("changed_by_name"));
+                    entry.setChangedAt(rs.getTimestamp("changed_at"));
+                    entry.setNote(rs.getString("note"));
+                    entries.add(entry);
+                }
+            }
+
+            return entries;
+
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                "Could not retrieve the history of request " + requestId, e
+            );
+        }
+    }
+
     private List<MaintenanceRequest> queryList(String sql, int... parameter)
             throws DatabaseException {
 
@@ -300,10 +350,8 @@ public class MaintenanceDAO {
                     ps.setInt(1, staffId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
-                            throw new IllegalArgumentException(
-                                "Select an active Staff member."
-                            );
-                        }
+                            throw new InvalidInputException("staffId", "Select an active Staff member.");
+                        }   
                     }
                 }
 
@@ -318,9 +366,7 @@ public class MaintenanceDAO {
 
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
-                            throw new IllegalArgumentException(
-                                "Maintenance request not found."
-                            );
+                            throw new InvalidInputException("requestId", "Maintenance request not found.");
                         }
                         oldStatus = rs.getString("status");
                     }
@@ -328,9 +374,7 @@ public class MaintenanceDAO {
 
                 if (!MaintenanceStatus.Reported.getDbValue()
                         .equalsIgnoreCase(oldStatus)) {
-                    throw new IllegalStateException(
-                        "Only Reported requests can be assigned."
-                    );
+                    throw new InvalidStatusTransitionException("Only Reported requests can be assigned.");
                 }
 
                 String updateSql =
@@ -413,9 +457,7 @@ public class MaintenanceDAO {
 
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
-                            throw new IllegalArgumentException(
-                                "Maintenance request not found."
-                            );
+                            throw new InvalidInputException("requestId", "Maintenance request not found.");
                         }
                         oldStatusValue = rs.getString("status");
                     }
@@ -431,10 +473,11 @@ public class MaintenanceDAO {
                         && newStatus == MaintenanceStatus.Completed);
 
                 if (!valid) {
-                    throw new IllegalStateException(
+                    throw new InvalidStatusTransitionException(
                         "Invalid maintenance transition: " +
-                        oldStatus.getDbValue() + " → " +
-                        newStatus.getDbValue()
+                        oldStatus.getDbValue() + " to " +
+                        newStatus.getDbValue() +
+                        " (requests move forward one step at a time)."
                     );
                 }
 
