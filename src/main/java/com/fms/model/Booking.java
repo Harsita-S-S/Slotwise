@@ -28,6 +28,7 @@ public class Booking {
     private String rejectionReason;
     private Integer activeFlag; // 1 for active (Pending, Approved), null for Cancelled/Rejected/Completed
     private LocalDateTime createdAt;
+        private boolean affectedByMaintenance; // FR-X1-02
 
     public Booking() {
     }
@@ -118,7 +119,14 @@ public class Booking {
     public void setUsername(String username) {
         this.username = username;
     }
+        public boolean isAffectedByMaintenance() {
+        return affectedByMaintenance;
+    }
 
+    public void setAffectedByMaintenance(boolean affectedByMaintenance) {
+        this.affectedByMaintenance = affectedByMaintenance;
+    }
+    
     public String getUserFullName() {
         return userFullName;
     }

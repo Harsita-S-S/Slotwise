@@ -126,6 +126,13 @@ public class DatabaseInitializer {
         } catch (SQLException ignored) {
             // Already present
         }
+
+        try (Statement stmt = conn.createStatement()) {
+            // FR-X1-02: bookings inside a maintenance window are flagged 'Affected'
+            stmt.execute("ALTER TABLE bookings ADD COLUMN affected_by_maintenance BOOLEAN NOT NULL DEFAULT FALSE");
+        } catch (SQLException ignored) {
+            // Already present
+        }
     }
 
     private static void seedTimeSlots(Connection conn) throws SQLException {

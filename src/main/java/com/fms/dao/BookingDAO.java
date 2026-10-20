@@ -401,6 +401,9 @@ public class BookingDAO {
         try {
             b.setRejectionReason(rs.getString("rejection_reason"));
         } catch (SQLException ignored) {}
+        try {
+            b.setAffectedByMaintenance(rs.getBoolean("affected_by_maintenance"));
+        } catch (SQLException ignored) {}
 
         int active = rs.getInt("active_flag");
         if (!rs.wasNull()) {

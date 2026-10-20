@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     status ENUM('Pending', 'Approved', 'Rejected', 'Cancelled', 'Completed') NOT NULL DEFAULT 'Approved',
     rejection_reason VARCHAR(255) NULL,
     active_flag TINYINT NULL DEFAULT 1,
+    affected_by_maintenance BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_booking_facility FOREIGN KEY (facility_id) 
         REFERENCES facilities(facility_id),

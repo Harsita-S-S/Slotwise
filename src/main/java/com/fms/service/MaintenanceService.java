@@ -6,6 +6,7 @@ import com.fms.dao.StaffDAO;
 import com.fms.exception.AccessDeniedException;
 import com.fms.exception.DatabaseException;
 import com.fms.exception.InvalidInputException;
+import com.fms.model.MaintenanceLogEntry;
 import com.fms.model.MaintenanceRequest;
 import com.fms.model.MaintenanceStatus;
 import com.fms.model.Role;
@@ -102,12 +103,62 @@ public class MaintenanceService {
                 );
             }
 
-            return maintenanceDAO.findAssignedToStaff(
-                staff.get().getStaffId()
+            return maintenanceDAO.findAssignedToStaffOrRaisedBy(
+                staff.get().getStaffId(),
+                currentUser.getUserId()
             );
         }
 
         return maintenanceDAO.findByRaisedBy(currentUser.getUserId());
+    }
+
+    /**
+     * View the status history of a maintenance request when the current user is allowed.
+     */
+    public List<MaintenanceLogEntry> getRequestHistory(int requestId)
+            throws DatabaseException {
+
+        sessionManager.requireRole(Role.User);
+        User currentUser = sessionManager.getCurrentUser();
+
+        MaintenanceRequest request = maintenanceDAO.findById(requestId)
+            .orElseThrow(() -> new InvalidInputException(
+                "Maintenance request not found."
+            ));
+
+        if (currentUser.getRole() == Role.Admin) {
+            return maintenanceDAO.findLog(requestId);
+        }
+
+        if (currentUser.getRole() == Role.Staff) {
+            Optional<Staff> staff = staffDAO.findByUserId(currentUser.getUserId());
+
+            if (staff.isEmpty() || !staff.get().isActive()) {
+                throw new AccessDeniedException(
+                    "An active Staff profile is required to view request history."
+                );
+            }
+
+            boolean isAssigned = request.getAssignedStaffId() != null
+                && request.getAssignedStaffId() == staff.get().getStaffId();
+            boolean isRaisedBy = request.getRaisedByUserId() == currentUser.getUserId();
+
+            if (!isAssigned && !isRaisedBy) {
+                throw new AccessDeniedException(
+                    "You can view history only for requests assigned to you or raised by you."
+                );
+            }
+
+            return maintenanceDAO.findLog(requestId);
+        }
+
+        if (request.getRaisedByUserId() != currentUser.getUserId()) {
+            throw new AccessDeniedException(
+                "You can view history only for requests you raised."
+            );
+        }
+
+        return maintenanceDAO.findLog(requestId);
     }
 
     /**

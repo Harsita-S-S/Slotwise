@@ -1,5 +1,7 @@
 package com.fms;
 
+import com.fms.dao.BookingDAO;
+import com.fms.dao.EquipmentDAO;
 import com.fms.dao.MaintenanceDAO;
 import com.fms.exception.AccessDeniedException;
 import com.fms.exception.BookingConflictException;
@@ -245,5 +247,139 @@ public class MaintenanceServiceTest {
 
         loginAs(reporter);
         assertEquals(1, bookingService.createBooking(facility.getFacilityId(), day, List.of(4), "Released", 5).size());
+    }
+
+    // ----------------------------------------------------------------------
+    // Step 3: rules, side effects and notifications
+    // ----------------------------------------------------------------------
+
+    private static int notificationCount(int userId, String type, String refKeyPrefix) throws Exception {
+        try (Connection c = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                     "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND type = ? AND ref_key LIKE ?")) {
+            ps.setInt(1, userId);
+            ps.setString(2, type);
+            ps.setString(3, refKeyPrefix + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    private static boolean isAffected(Booking b) {
+        return new BookingDAO().findById(b.getBookingId()).orElseThrow().isAffectedByMaintenance();
+    }
+
+    private static EquipmentCondition condition(Equipment e) {
+        return new EquipmentDAO().findById(e.getEquipmentId()).orElseThrow().getConditionStatus();
+    }
+
+    @Test
+    @DisplayName("BR-07/FR-X1-02: bookings inside a new window are flagged Affected and notified; completion clears the flag")
+    public void testAffectedBookingsFlaggedNotifiedAndReleased() throws Exception {
+        LocalDate day = LocalDate.now().plusDays(8);
+        loginAs(reporter);
+        Booking inside = bookingService.createBooking(facility.getFacilityId(), day, List.of(3), "Inside window", 5).get(0);
+        Booking outside = bookingService.createBooking(facility.getFacilityId(), day, List.of(8), "Outside window", 5).get(0);
+        assertFalse(isAffected(inside));
+
+        MaintenanceRequest r = raise(facility, null);
+        assign(r, techA, day, 2, 4);
+
+        assertTrue(isAffected(inside));
+        assertFalse(isAffected(outside));
+        assertEquals(1, notificationCount(reporter.getUserId(), "BOOKING_AFFECTED",
+                "BOOKING-AFFECTED-" + inside.getBookingId() + "-"));
+        assertEquals(0, notificationCount(reporter.getUserId(), "BOOKING_AFFECTED",
+                "BOOKING-AFFECTED-" + outside.getBookingId() + "-"));
+        assertEquals(1, notificationCount(techAUser.getUserId(), "MAINTENANCE_ASSIGNED",
+                "MAINT-ASSIGNED-" + r.getRequestId() + "-"));
+
+        loginAs(techAUser);
+        maintenanceService.updateStatus(r.getRequestId(), MaintenanceStatus.InProgress, null);
+        assertTrue(isAffected(inside), "still flagged while the work is in progress");
+        maintenanceService.updateStatus(r.getRequestId(), MaintenanceStatus.Completed, "Done");
+
+        assertFalse(isAffected(inside));
+        assertEquals(1, notificationCount(reporter.getUserId(), "MAINTENANCE_COMPLETED",
+                "MAINT-COMPLETED-" + r.getRequestId()));
+    }
+
+    @Test
+    @DisplayName("Re-assigning an Assigned request moves the block and the Affected flags; In Progress cannot be re-assigned")
+    public void testReassignMovesWindow() throws Exception {
+        LocalDate day1 = LocalDate.now().plusDays(9);
+        LocalDate day2 = LocalDate.now().plusDays(10);
+        loginAs(reporter);
+        Booking b1 = bookingService.createBooking(facility.getFacilityId(), day1, List.of(3), "Day one", 5).get(0);
+        Booking b2 = bookingService.createBooking(facility.getFacilityId(), day2, List.of(3), "Day two", 5).get(0);
+
+        MaintenanceRequest r = raise(facility, null);
+        assign(r, techA, day1, 3, 3);
+        assertTrue(isAffected(b1));
+        assertFalse(isAffected(b2));
+
+        MaintenanceRequest moved = assign(r, techB, day2, 3, 3);
+        assertEquals(MaintenanceStatus.Assigned, moved.getStatus());
+        assertEquals(techB.getStaffId(), moved.getAssignedStaffId());
+        assertFalse(isAffected(b1));
+        assertTrue(isAffected(b2));
+        assertFalse(new BookingDAO().isSlotUnderMaintenance(facility.getFacilityId(), day1, 3));
+        assertTrue(new BookingDAO().isSlotUnderMaintenance(facility.getFacilityId(), day2, 3));
+        assertEquals(1, notificationCount(techBUser.getUserId(), "MAINTENANCE_ASSIGNED",
+                "MAINT-ASSIGNED-" + r.getRequestId() + "-"));
+
+        loginAs(techBUser);
+        maintenanceService.updateStatus(r.getRequestId(), MaintenanceStatus.InProgress, null);
+        loginAs(admin);
+        assertThrows(InvalidStatusTransitionException.class,
+                () -> maintenanceService.assignRequest(r.getRequestId(), techA.getStaffId(), day1, 1, 1, null));
+    }
+
+    @Test
+    @DisplayName("FR-MNT-06: equipment condition follows the work and Retired items are left alone")
+    public void testEquipmentConditionFollowsWorkflow() throws Exception {
+        loginAs(admin);
+        long ts = System.currentTimeMillis();
+        EquipmentService equipmentService = new EquipmentService();
+        Equipment working = equipmentService.addEquipment(facility.getFacilityId(), "Cond Rig " + ts, "Tools",
+                "SN-COND-" + ts, Date.valueOf(LocalDate.now().minusDays(5)));
+        Equipment retired = equipmentService.addEquipment(facility.getFacilityId(), "Old Rig " + ts, "Tools",
+                "SN-OLD-" + ts, Date.valueOf(LocalDate.now().minusDays(5)));
+        equipmentService.updateCondition(retired.getEquipmentId(), EquipmentCondition.Retired);
+
+        MaintenanceRequest r1 = raise(facility, working.getEquipmentId());
+        MaintenanceRequest r2 = raise(facility, retired.getEquipmentId());
+        assign(r1, techA, LocalDate.now().plusDays(11), 1, 1);
+        assign(r2, techA, LocalDate.now().plusDays(12), 1, 1);
+        assertEquals(EquipmentCondition.Good, condition(working));
+
+        loginAs(techAUser);
+        maintenanceService.updateStatus(r1.getRequestId(), MaintenanceStatus.InProgress, null);
+        maintenanceService.updateStatus(r2.getRequestId(), MaintenanceStatus.InProgress, null);
+        assertEquals(EquipmentCondition.UnderRepair, condition(working));
+        assertEquals(EquipmentCondition.Retired, condition(retired));
+
+        maintenanceService.updateStatus(r1.getRequestId(), MaintenanceStatus.Completed, "Fixed");
+        maintenanceService.updateStatus(r2.getRequestId(), MaintenanceStatus.Completed, "Inspected");
+        assertEquals(EquipmentCondition.Good, condition(working));
+        assertEquals(EquipmentCondition.Retired, condition(retired));
+    }
+
+    @Test
+    @DisplayName("Staff see requests they raised; request history is limited to the people involved")
+    public void testStaffSeesOwnRaisedRequestsAndHistoryScope() throws Exception {
+        loginAs(techBUser);
+        MaintenanceRequest mine = maintenanceService.createRequest(newRequest(facility, null, Priority.Low));
+        assertTrue(maintenanceService.getVisibleRequests().stream().anyMatch(x -> x.getRequestId() == mine.getRequestId()));
+        assertEquals(1, maintenanceService.getRequestHistory(mine.getRequestId()).size());
+
+        loginAs(otherUser);
+        assertThrows(AccessDeniedException.class, () -> maintenanceService.getRequestHistory(mine.getRequestId()));
+        loginAs(techAUser);
+        assertThrows(AccessDeniedException.class, () -> maintenanceService.getRequestHistory(mine.getRequestId()));
+        loginAs(admin);
+        assertEquals(1, maintenanceService.getRequestHistory(mine.getRequestId()).size());
     }
 }
